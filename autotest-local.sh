@@ -37,3 +37,12 @@ else
   echo "==> Test INC_2 ... [FAIL]"
   exit 128
 fi
+# Increment 3
+MSG=$(shortenertest -test.v -test.run=^TestIteration3$ -source-path=.)
+if [ $? -eq 0 ]; then
+  echo "==> Test INC_3 ..... [OK]"
+else
+  echo "$MSG"
+  echo "==> Test INC_3 ... [FAIL]"
+  exit 128
+fi

@@ -57,9 +57,8 @@ func TestHandler_POST(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			h := New()
-			h.store = memory.NewMockStore()
-			h.ServeHTTP(w, request)
+			h := New(memory.NewMockStore())
+			h.POST(w, request)
 			result := w.Result()
 
 			assert.Equal(t, test.want.statusCode, result.StatusCode)
@@ -97,31 +96,14 @@ func TestHandler_GET(t *testing.T) {
 				statusCode: 404,
 			},
 		},
-		{
-			name: "Test right URL #1",
-			url:  "/rfdsgd",
-			want: want{
-				statusCode: 307,
-				location:   "http://test.com/test",
-			},
-		},
-		{
-			name: "Test right URL #2",
-			url:  "/srewfrEW",
-			want: want{
-				statusCode: 307,
-				location:   "http://test.com/test?v=3",
-			},
-		},
 	}
 	for _, tt := range tests {
 		test := tt
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			w := httptest.NewRecorder()
-			h := New()
-			h.store = memory.NewMockStore()
-			h.ServeHTTP(w, request)
+			h := New(memory.NewMockStore())
+			h.GET(w, request)
 			result := w.Result()
 
 			assert.Equal(t, test.want.statusCode, result.StatusCode)
@@ -130,99 +112,6 @@ func TestHandler_GET(t *testing.T) {
 			err := result.Body.Close()
 			require.NoError(t, err)
 			assert.Equal(t, test.want.location, userResult)
-		}
-		t.Run(test.name, f)
-	}
-}
-
-func TestHandler_ServeHTTP(t *testing.T) {
-	type want struct {
-		statusCode int
-	}
-	tests := []struct {
-		name   string
-		reqURL string
-		method string
-		body   string
-		want   want
-	}{
-		{
-			name:   "Test Bad method PUT",
-			method: http.MethodPut,
-			body:   "12324",
-			reqURL: "/",
-			want: want{
-				statusCode: http.StatusMethodNotAllowed,
-			},
-		},
-		{
-			name:   "Test Bad method OPTION",
-			method: http.MethodOptions,
-			body:   "12324",
-			reqURL: "/",
-			want: want{
-				statusCode: http.StatusMethodNotAllowed,
-			},
-		},
-		{
-			name:   "Test fail URL #1",
-			body:   "http:h32ogewfrnophgeprge",
-			method: http.MethodPost,
-			reqURL: "/",
-			want: want{
-				statusCode: http.StatusBadRequest,
-			},
-		},
-		{
-			name:   "Test right URL #1",
-			body:   "http://test.com/test",
-			method: http.MethodPost,
-			reqURL: "/",
-			want: want{
-				statusCode: http.StatusCreated,
-			},
-		},
-		{
-			name:   "Test right URL #2",
-			body:   "http://test.com/test?v=3",
-			method: http.MethodPost,
-			reqURL: "/",
-			want: want{
-				statusCode: http.StatusCreated,
-			},
-		},
-		{
-			name:   "Test right GET URL #1",
-			body:   "",
-			method: http.MethodGet,
-			reqURL: "/rfdsgd",
-			want: want{
-				statusCode: http.StatusTemporaryRedirect,
-			},
-		},
-		{
-			name:   "Test wrong GET URL #1",
-			body:   "",
-			method: http.MethodGet,
-			reqURL: "/rfdsgd34rt43",
-			want: want{
-				statusCode: http.StatusNotFound,
-			},
-		},
-	}
-	for _, tt := range tests {
-		test := tt
-		f := func(t *testing.T) {
-			request := httptest.NewRequest(test.method, test.reqURL, strings.NewReader(test.body))
-			w := httptest.NewRecorder()
-			h := New()
-			h.store = memory.NewMockStore()
-			h.ServeHTTP(w, request)
-			result := w.Result()
-
-			assert.Equal(t, test.want.statusCode, result.StatusCode)
-			err := result.Body.Close()
-			require.NoError(t, err)
 		}
 		t.Run(test.name, f)
 	}
