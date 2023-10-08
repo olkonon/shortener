@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/olkonon/shortener/internal/app/handler"
 	"github.com/olkonon/shortener/internal/app/storage/memory"
 	"github.com/stretchr/testify/assert"
@@ -18,9 +19,10 @@ func TestRouter_POST(t *testing.T) {
 		body       string
 	}
 	tests := []struct {
-		name string
-		body string
-		want want
+		name    string
+		body    string
+		baseURL string
+		want    want
 	}{
 		{
 			name: "Test fail URL #1",
@@ -37,16 +39,18 @@ func TestRouter_POST(t *testing.T) {
 			},
 		},
 		{
-			name: "Test right URL #1",
-			body: "http://test.com/test",
+			name:    "Test right URL #1",
+			body:    "http://test.com/test",
+			baseURL: "http://example.com",
 			want: want{
 				statusCode: http.StatusCreated,
 				body:       "http://example.com/rfdsgd",
 			},
 		},
 		{
-			name: "Test right URL #2",
-			body: "http://test.com/test?v=3",
+			name:    "Test right URL #2",
+			body:    "http://test.com/test?v=3",
+			baseURL: "http://example.com",
 			want: want{
 				statusCode: http.StatusCreated,
 				body:       "http://example.com/srewfrEW",
@@ -58,7 +62,7 @@ func TestRouter_POST(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			r := New(handler.New(memory.NewMockStore()))
+			r := New(handler.New(memory.NewMockStore(), test.baseURL))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -119,7 +123,7 @@ func TestRouter_GET(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			w := httptest.NewRecorder()
-			r := New(handler.New(memory.NewMockStore()))
+			r := New(handler.New(memory.NewMockStore(), common.DefaultBaseURL))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -214,7 +218,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.reqURL, strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			h := handler.New(memory.NewMockStore())
+			h := handler.New(memory.NewMockStore(), common.DefaultBaseURL)
 			r := New(h)
 			r.ServeHTTP(w, request)
 			result := w.Result()

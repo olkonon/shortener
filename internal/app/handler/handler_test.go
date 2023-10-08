@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/olkonon/shortener/internal/app/storage/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,35 +18,40 @@ func TestHandler_POST(t *testing.T) {
 		body       string
 	}
 	tests := []struct {
-		name string
-		body string
-		want want
+		name    string
+		body    string
+		baseURL string
+		want    want
 	}{
 		{
-			name: "Test fail URL #1",
-			body: "12324",
+			name:    "Test fail URL #1",
+			body:    "12324",
+			baseURL: common.DefaultBaseURL,
 			want: want{
 				statusCode: http.StatusBadRequest,
 			},
 		},
 		{
-			name: "Test fail URL #2",
-			body: "http:h32ogewfrnophgeprge",
+			name:    "Test fail URL #2",
+			body:    "http:h32ogewfrnophgeprge",
+			baseURL: common.DefaultBaseURL,
 			want: want{
 				statusCode: http.StatusBadRequest,
 			},
 		},
 		{
-			name: "Test right URL #1",
-			body: "http://test.com/test",
+			name:    "Test right URL #1",
+			body:    "http://test.com/test",
+			baseURL: "http://example.com",
 			want: want{
 				statusCode: http.StatusCreated,
 				body:       "http://example.com/rfdsgd",
 			},
 		},
 		{
-			name: "Test right URL #2",
-			body: "http://test.com/test?v=3",
+			name:    "Test right URL #2",
+			body:    "http://test.com/test?v=3",
+			baseURL: "http://example.com",
 			want: want{
 				statusCode: http.StatusCreated,
 				body:       "http://example.com/srewfrEW",
@@ -57,7 +63,7 @@ func TestHandler_POST(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			h := New(memory.NewMockStore())
+			h := New(memory.NewMockStore(), test.baseURL)
 			h.POST(w, request)
 			result := w.Result()
 
@@ -102,7 +108,7 @@ func TestHandler_GET(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			w := httptest.NewRecorder()
-			h := New(memory.NewMockStore())
+			h := New(memory.NewMockStore(), common.DefaultBaseURL)
 			h.GET(w, request)
 			result := w.Result()
 

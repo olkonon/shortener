@@ -10,14 +10,16 @@ import (
 	"net/http"
 )
 
-func New(store storage.Storage) *Handler {
+func New(store storage.Storage, baseURL string) *Handler {
 	return &Handler{
-		store: store,
+		store:   store,
+		baseURL: baseURL,
 	}
 }
 
 type Handler struct {
-	store storage.Storage
+	store   storage.Storage
+	baseURL string
 }
 
 func (h *Handler) GET(w http.ResponseWriter, r *http.Request) {
@@ -31,12 +33,6 @@ func (h *Handler) GET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
-	//Определение схемы
-	scheme := "http"
-	if r.TLS != nil {
-		scheme = "https"
-	}
-
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -57,7 +53,7 @@ func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	if _, tmpErr := w.Write([]byte(fmt.Sprintf("%s://%s/%s", scheme, r.Host, id))); tmpErr != nil {
+	if _, tmpErr := w.Write([]byte(fmt.Sprintf("%s/%s", h.baseURL, id))); tmpErr != nil {
 		log.Error(tmpErr)
 	}
 }
