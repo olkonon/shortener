@@ -3,16 +3,17 @@ package handler
 import (
 	"fmt"
 	log "github.com/google/logger"
+	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/olkonon/shortener/internal/app/storage"
+	"github.com/olkonon/shortener/internal/app/storage/memory"
 	"io"
 	"net/http"
-	"net/url"
 	"path"
 )
 
 func New() *Handler {
 	return &Handler{
-		store: storage.NewInMemory(),
+		store: memory.NewInMemory(),
 	}
 }
 
@@ -49,8 +50,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		longURL := string(b)
 
 		//Проверка корректности URL
-		_, err = url.Parse(longURL)
-		if err != nil {
+		if !common.IsValidURL(longURL) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -80,6 +80,6 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Redirect(w, r, longURL, http.StatusTemporaryRedirect)
 	default:
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
