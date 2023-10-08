@@ -58,5 +58,16 @@ else
   exit 128
 fi
 
+# Increment 5
+MSG=$(shortenertestbeta -test.v -test.run=^TestIteration5$ \
+                    -binary-path=cmd/shortener/shortener \
+                    -server-port=8080)
+if [ $? -eq 0 ]; then
+  echo "==> Test INC_5 ..... [OK]"
+else
+  echo "$MSG"
+  echo "==> Test INC_5 ... [FAIL]"
+  exit 128
+fi
 
 

@@ -63,7 +63,7 @@ func TestHandler_POST(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			h := New(memory.NewMockStore(), test.baseURL)
+			h := New(memory.NewMockStorage(), test.baseURL)
 			h.POST(w, request)
 			result := w.Result()
 
@@ -108,7 +108,7 @@ func TestHandler_GET(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			w := httptest.NewRecorder()
-			h := New(memory.NewMockStore(), common.DefaultBaseURL)
+			h := New(memory.NewMockStorage(), common.DefaultBaseURL)
 			h.GET(w, request)
 			result := w.Result()
 

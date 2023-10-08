@@ -62,7 +62,7 @@ func TestRouter_POST(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			r := New(handler.New(memory.NewMockStore(), test.baseURL))
+			r := New(handler.New(memory.NewMockStorage(), test.baseURL))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -123,7 +123,7 @@ func TestRouter_GET(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			w := httptest.NewRecorder()
-			r := New(handler.New(memory.NewMockStore(), common.DefaultBaseURL))
+			r := New(handler.New(memory.NewMockStorage(), common.DefaultBaseURL))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -218,7 +218,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.reqURL, strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			h := handler.New(memory.NewMockStore(), common.DefaultBaseURL)
+			h := handler.New(memory.NewMockStorage(), common.DefaultBaseURL)
 			r := New(h)
 			r.ServeHTTP(w, request)
 			result := w.Result()

@@ -1,6 +1,7 @@
 package memory
 
-func NewMockStore() *InMemory {
+// NewMockStorage - создает заполненный InMemory для тестов
+func NewMockStorage() *InMemory {
 	return &InMemory{
 		storeByID: map[string]string{
 			"srewfrEW": "http://test.com/test?v=3",

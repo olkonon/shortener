@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"github.com/olkonon/shortener/internal/app/common"
+	"os"
 )
 
 type Config struct {
@@ -16,7 +17,15 @@ func Parse() Config {
 	flag.Parse()
 
 	return Config{
-		BaseURL:       *baseURL,
-		ListenAddress: *address,
+		BaseURL:       mergeSetting(*baseURL, "BASE_URL"),
+		ListenAddress: mergeSetting(*address, "SERVER_ADDRESS"),
 	}
+}
+
+func mergeSetting(flagSetting, envSettingName string) string {
+	envSetting := os.Getenv(envSettingName)
+	if envSetting == "" {
+		return flagSetting
+	}
+	return envSetting
 }
