@@ -1,6 +1,14 @@
 package common
 
-import "testing"
+import (
+	"github.com/sirupsen/logrus"
+	"io"
+	"testing"
+)
+
+func init() {
+	logrus.SetOutput(io.Discard)
+}
 
 func TestGenRandomString(t *testing.T) {
 	expectedLen := 16

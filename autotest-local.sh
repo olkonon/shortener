@@ -81,3 +81,14 @@ else
   exit 128
 fi
 
+# Increment 7
+MSG=$(shortenertestbeta -test.v -test.run=^TestIteration7$ \
+                    -binary-path=cmd/shortener/shortener \
+                    -source-path=.)
+if [ $? -eq 0 ]; then
+  echo "==> Test INC_7 ..... [OK]"
+else
+  echo "$MSG"
+  echo "==> Test INC_7 ... [FAIL]"
+  exit 128
+fi

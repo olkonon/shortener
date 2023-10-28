@@ -1,6 +1,14 @@
 package memory
 
-import "testing"
+import (
+	"github.com/sirupsen/logrus"
+	"io"
+	"testing"
+)
+
+func init() {
+	logrus.SetOutput(io.Discard)
+}
 
 func TestInMemory_GetURLByID(t *testing.T) {
 	type fields struct {

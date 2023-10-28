@@ -1,9 +1,15 @@
 package common
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"testing"
 )
+
+func init() {
+	logrus.SetOutput(io.Discard)
+}
 
 func TestIsValidURL(t *testing.T) {
 	tests := []struct {
