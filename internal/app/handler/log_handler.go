@@ -60,5 +60,5 @@ func WithLog(f func(w http.ResponseWriter, r *http.Request)) func(w http.Respons
 
 		f(&wl, r)
 	}
-	return http.HandlerFunc(logFn)
+	return logFn
 }

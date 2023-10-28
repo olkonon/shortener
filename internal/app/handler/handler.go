@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -13,6 +14,7 @@ import (
 )
 
 const (
+	ContentEncodingHeader      = "Content-Encoding"
 	ContentTypeHeader          = "Content-Type"
 	ContentTypeApplicationJSON = "application/json"
 )
@@ -40,7 +42,7 @@ func (h *Handler) GET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
-	b, err := io.ReadAll(r.Body)
+	b, err := getBodyGzip(r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -71,7 +73,7 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := io.ReadAll(r.Body)
+	b, err := getBodyGzip(r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -91,8 +93,6 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info(data)
-
 	id, err := h.store.GenIDByURL(data.URL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -109,11 +109,23 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 		log.Error("JSON serialization error:", err)
 		return
 	}
-	log.Info(response, string(buf))
 
 	w.Header().Set(ContentTypeHeader, ContentTypeApplicationJSON)
 	w.WriteHeader(http.StatusCreated)
 	if _, tmpErr := w.Write(buf); tmpErr != nil {
 		log.Error(tmpErr)
+	}
+}
+
+func getBodyGzip(r *http.Request) ([]byte, error) {
+	switch r.Header.Get(ContentEncodingHeader) {
+	case "gzip":
+		reader, err := gzip.NewReader(r.Body)
+		if err != nil {
+			return nil, err
+		}
+		return io.ReadAll(reader)
+	default:
+		return io.ReadAll(r.Body)
 	}
 }

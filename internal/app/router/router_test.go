@@ -95,6 +95,7 @@ func TestRouter_POST_JSON(t *testing.T) {
 		name        string
 		body        api.AddURLRequest
 		contentType string
+		gzip        bool
 		baseURL     string
 		want        want
 	}{
@@ -148,15 +149,33 @@ func TestRouter_POST_JSON(t *testing.T) {
 				json:       false,
 			},
 		},
+		{
+			name:        "Test GZIP compression #1",
+			body:        api.AddURLRequest{URL: "http://test.com/test?v=3"},
+			contentType: handler.ContentTypeApplicationJSON,
+			gzip:        true,
+			baseURL:     "http://example.com",
+			want: want{
+				statusCode: http.StatusCreated,
+				json:       false,
+			},
+		},
 	}
 	for _, tt := range tests {
 		test := tt
 		f := func(t *testing.T) {
 			reqBody, err := json.Marshal(test.body)
 			require.NoError(t, err)
+			if test.gzip {
+				reqBody, err = common.CompressGzip(reqBody)
+				require.NoError(t, err)
+			}
 
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader(reqBody))
 			request.Header.Set(handler.ContentTypeHeader, test.contentType)
+			if test.gzip {
+				request.Header.Set(handler.ContentEncodingHeader, "gzip")
+			}
 			w := httptest.NewRecorder()
 			r := New(handler.New(memory.NewMockStorage(), test.baseURL))
 			r.ServeHTTP(w, request)
