@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	log "github.com/google/logger"
+	"errors"
 	"github.com/olkonon/shortener/internal/app/config"
 	"github.com/olkonon/shortener/internal/app/handler"
 	"github.com/olkonon/shortener/internal/app/router"
 	"github.com/olkonon/shortener/internal/app/storage/memory"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,7 +15,6 @@ import (
 )
 
 func main() {
-	log.Init("main", true, true, os.Stdout)
 	appConfig := config.Parse()
 	server := &http.Server{
 		Handler: router.New(handler.New(memory.NewInMemory(), appConfig.BaseURL)),
@@ -26,13 +26,13 @@ func main() {
 
 	go func() {
 		sig := <-sigs
-		log.Infof("Get OS signal %v terminating...", sig)
+		log.Infof("Get OS signal [%s], terminating...", sig.String())
 		server.SetKeepAlivesEnabled(false)
 		if err := server.Shutdown(context.Background()); err != nil {
 			log.Error("HTTP server shutdown error: ", err)
 		}
 	}()
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Error("Start HTTP server error: ", err)
 	}
 }

@@ -2,10 +2,10 @@ package handler
 
 import (
 	"fmt"
-	log "github.com/google/logger"
 	"github.com/gorilla/mux"
 	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/olkonon/shortener/internal/app/storage"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 )

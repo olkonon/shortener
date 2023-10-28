@@ -70,4 +70,14 @@ else
   exit 128
 fi
 
+# Increment 6
+MSG=$(shortenertestbeta -test.v -test.run=^TestIteration6$ \
+                    -source-path=.)
+if [ $? -eq 0 ]; then
+  echo "==> Test INC_6 ..... [OK]"
+else
+  echo "$MSG"
+  echo "==> Test INC_6 ... [FAIL]"
+  exit 128
+fi
 
