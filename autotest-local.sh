@@ -19,7 +19,7 @@ else
   echo "==> Build binary ... [OK]"
 fi
 # Increment 1
-MSG=$(shortenertest -test.v -test.run=^TestIteration1$ \
+MSG=$(shortenertestbeta -test.v -test.run=^TestIteration1$ \
                     -binary-path=cmd/shortener/shortener)
 if [ $? -eq 0 ]; then
   echo "==> Test INC_1 ..... [OK]"
@@ -28,3 +28,46 @@ else
   echo "==> Test INC_1 ... [FAIL]"
   exit 128
 fi
+# Increment 2
+MSG=$(shortenertestbeta -test.v -test.run=^TestIteration2$ -source-path=.)
+if [ $? -eq 0 ]; then
+  echo "==> Test INC_2 ..... [OK]"
+else
+  echo "$MSG"
+  echo "==> Test INC_2 ... [FAIL]"
+  exit 128
+fi
+# Increment 3
+MSG=$(shortenertestbeta -test.v -test.run=^TestIteration3$ -source-path=.)
+if [ $? -eq 0 ]; then
+  echo "==> Test INC_3 ..... [OK]"
+else
+  echo "$MSG"
+  echo "==> Test INC_3 ... [FAIL]"
+  exit 128
+fi
+# Increment 4
+MSG=$(shortenertestbeta -test.v -test.run=^TestIteration4$ \
+                    -binary-path=cmd/shortener/shortener \
+                    -server-port=8080)
+if [ $? -eq 0 ]; then
+  echo "==> Test INC_4 ..... [OK]"
+else
+  echo "$MSG"
+  echo "==> Test INC_4 ... [FAIL]"
+  exit 128
+fi
+
+# Increment 5
+MSG=$(shortenertestbeta -test.v -test.run=^TestIteration5$ \
+                    -binary-path=cmd/shortener/shortener \
+                    -server-port=8080)
+if [ $? -eq 0 ]; then
+  echo "==> Test INC_5 ..... [OK]"
+else
+  echo "$MSG"
+  echo "==> Test INC_5 ... [FAIL]"
+  exit 128
+fi
+
+

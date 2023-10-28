@@ -1,4 +1,4 @@
-package storage
+package memory
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ func NewInMemory() *InMemory {
 	}
 }
 
-// InMemory простое птокобезопасное хранилище на map
+// InMemory простое птокобезопасное хранилище на map реализующее интерфейс Storage
 type InMemory struct {
 	storeByID  map[string]string
 	storeByURL map[string]string
