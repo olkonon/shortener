@@ -43,7 +43,7 @@ func (rwl *ResponseWriterWithLog) BodySize() int {
 	return rwl.bodySize
 }
 
-func WithLog(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+func WithLog(h http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()
 		wl := NewResponseWriterWithLog(w)
@@ -58,7 +58,7 @@ func WithLog(f func(w http.ResponseWriter, r *http.Request)) func(w http.Respons
 
 		}()
 
-		f(&wl, r)
+		h.ServeHTTP(&wl, r)
 	}
-	return logFn
+	return http.HandlerFunc(logFn)
 }

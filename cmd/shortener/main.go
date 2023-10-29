@@ -6,6 +6,8 @@ import (
 	"github.com/olkonon/shortener/internal/app/config"
 	"github.com/olkonon/shortener/internal/app/handler"
 	"github.com/olkonon/shortener/internal/app/router"
+	"github.com/olkonon/shortener/internal/app/storage"
+	"github.com/olkonon/shortener/internal/app/storage/file"
 	"github.com/olkonon/shortener/internal/app/storage/memory"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -16,8 +18,14 @@ import (
 
 func main() {
 	appConfig := config.Parse()
+
+	var storageBackend storage.Storage = memory.NewInMemory()
+	if appConfig.StorageFilePath != "" {
+		storageBackend = file.NewFileStorage(appConfig.StorageFilePath)
+	}
+
 	server := &http.Server{
-		Handler: router.New(handler.New(memory.NewInMemory(), appConfig.BaseURL)),
+		Handler: router.New(handler.New(storageBackend, appConfig.BaseURL)),
 		Addr:    appConfig.ListenAddress,
 	}
 

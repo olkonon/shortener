@@ -7,18 +7,22 @@ import (
 )
 
 type Config struct {
-	BaseURL       string
-	ListenAddress string
+	BaseURL         string
+	ListenAddress   string
+	StorageFilePath string
 }
 
 func Parse() Config {
-	address := flag.String("a", common.DefaultListenAddress, "Listen server address, default localhost:8080")
-	baseURL := flag.String("b", common.DefaultBaseURL, "Short URL base address default http://localhost:8080") // делаем разбор командной строки
+	address := flag.String("a", common.DefaultListenAddress, "Listen server address, default "+common.DefaultListenAddress)
+	baseURL := flag.String("b", common.DefaultBaseURL, "Short URL base address, default "+common.DefaultBaseURL)
+	filePath := flag.String("f", common.DefaultStorageFilePath, "File path for base file storage, default "+common.DefaultStorageFilePath)
+	// делаем разбор командной строки
 	flag.Parse()
 
 	return Config{
-		BaseURL:       mergeSetting(*baseURL, "BASE_URL"),
-		ListenAddress: mergeSetting(*address, "SERVER_ADDRESS"),
+		BaseURL:         mergeSetting(*baseURL, "BASE_URL"),
+		ListenAddress:   mergeSetting(*address, "SERVER_ADDRESS"),
+		StorageFilePath: mergeSetting(*filePath, "FILE_STORAGE_PATH"),
 	}
 }
 

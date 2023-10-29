@@ -10,8 +10,9 @@ import (
 func New(h *handler.Handler) *mux.Router {
 	r := mux.NewRouter()
 	r.Use(handlers.CompressHandler)
-	r.HandleFunc("/", handler.WithLog(h.POST)).Methods(http.MethodPost)
-	r.HandleFunc("/{id}", handler.WithLog(h.GET)).Methods(http.MethodGet)
-	r.HandleFunc("/api/shorten", handler.WithLog(h.PostJSON)).Methods(http.MethodPost)
+	r.Use(handler.WithLog)
+	r.HandleFunc("/", h.POST).Methods(http.MethodPost)
+	r.HandleFunc("/{id}", h.GET).Methods(http.MethodGet)
+	r.HandleFunc("/api/shorten", h.PostJSON).Methods(http.MethodPost)
 	return r
 }
