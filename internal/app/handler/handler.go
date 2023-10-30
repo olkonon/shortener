@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -42,7 +41,7 @@ func (h *Handler) GET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
-	b, err := getBodyGzip(r)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -73,7 +72,7 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := getBodyGzip(r)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -114,18 +113,5 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	if _, tmpErr := w.Write(buf); tmpErr != nil {
 		log.Error(tmpErr)
-	}
-}
-
-func getBodyGzip(r *http.Request) ([]byte, error) {
-	switch r.Header.Get(ContentEncodingHeader) {
-	case "gzip":
-		reader, err := gzip.NewReader(r.Body)
-		if err != nil {
-			return nil, err
-		}
-		return io.ReadAll(reader)
-	default:
-		return io.ReadAll(r.Body)
 	}
 }
