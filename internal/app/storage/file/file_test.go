@@ -1,6 +1,7 @@
 package file
 
 import (
+	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -20,19 +21,23 @@ func TestFileStorage_GetURLByID(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
+	testID1 := common.GenHashedString("https://test.com")
+	testID2 := common.GenHashedString("https://test2.com")
+	testID3 := common.GenHashedString("https://test3.com")
+
 	err := store.appendToFile(Record{
 		URL: "https://test.com",
-		ID:  "fwrefw",
+		ID:  testID1,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
 		URL: "https://test2.com",
-		ID:  "fd56dfg",
+		ID:  testID2,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
 		URL: "https://test3.com",
-		ID:  "fd5345",
+		ID:  testID3,
 	})
 	require.NoError(t, err)
 
@@ -47,19 +52,19 @@ func TestFileStorage_GetURLByID(t *testing.T) {
 	}{
 		{
 			name:    "Test record exists #1",
-			id:      "fwrefw",
+			id:      testID1,
 			want:    "https://test.com",
 			wantErr: false,
 		},
 		{
 			name:    "Test record exists #2",
-			id:      "fd56dfg",
+			id:      testID2,
 			want:    "https://test2.com",
 			wantErr: false,
 		},
 		{
 			name:    "Test record exists #3",
-			id:      "fd5345",
+			id:      testID3,
 			want:    "https://test3.com",
 			wantErr: false,
 		},
@@ -101,20 +106,22 @@ func TestFileStorage_GenIDByURL(t *testing.T) {
 		err := os.Remove(filename)
 		require.NoError(t, err)
 	}()
-
+	testID1 := common.GenHashedString("https://test.com")
+	testID2 := common.GenHashedString("https://test2.com")
+	testID3 := common.GenHashedString("https://test3.com")
 	err := store.appendToFile(Record{
 		URL: "https://test.com",
-		ID:  "fwrefw",
+		ID:  testID1,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
 		URL: "https://test2.com",
-		ID:  "fd56dfg",
+		ID:  testID2,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
 		URL: "https://test3.com",
-		ID:  "fd5345",
+		ID:  testID3,
 	})
 	require.NoError(t, err)
 
@@ -130,19 +137,19 @@ func TestFileStorage_GenIDByURL(t *testing.T) {
 		{
 			name:    "Test generate from existed URL #1",
 			url:     "https://test.com",
-			want:    "fwrefw",
+			want:    testID1,
 			wantErr: false,
 		},
 		{
 			name:    "Test generate from existed URL #2",
 			url:     "https://test2.com",
-			want:    "fd56dfg",
+			want:    testID2,
 			wantErr: false,
 		},
 		{
 			name:    "Test generate from existed URL #3",
 			url:     "https://test3.com",
-			want:    "fd5345",
+			want:    testID3,
 			wantErr: false,
 		},
 	}

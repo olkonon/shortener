@@ -53,7 +53,7 @@ func TestHandler_POST(t *testing.T) {
 			baseURL: "http://example.com",
 			want: want{
 				statusCode: http.StatusCreated,
-				body:       "http://example.com/rfdsgd",
+				body:       "http://example.com/" + memory.MockID2,
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestHandler_POST(t *testing.T) {
 			baseURL: "http://example.com",
 			want: want{
 				statusCode: http.StatusCreated,
-				body:       "http://example.com/srewfrEW",
+				body:       "http://example.com/" + memory.MockID1,
 			},
 		},
 	}
@@ -128,7 +128,7 @@ func TestHandler_POST_JSON(t *testing.T) {
 			want: want{
 				json:       true,
 				statusCode: http.StatusCreated,
-				body:       api.AddURLResponse{Result: "http://example.com/rfdsgd"},
+				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID2},
 			},
 		},
 		{
@@ -138,7 +138,7 @@ func TestHandler_POST_JSON(t *testing.T) {
 			want: want{
 				json:       true,
 				statusCode: http.StatusCreated,
-				body:       api.AddURLResponse{Result: "http://example.com/srewfrEW"},
+				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID1},
 			},
 		},
 	}

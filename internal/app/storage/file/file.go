@@ -11,8 +11,6 @@ import (
 	"sync"
 )
 
-const ShortURLLen = 10
-
 type Record struct {
 	ID  string
 	URL string
@@ -20,9 +18,8 @@ type Record struct {
 
 func NewFileStorage(path string) *InFile {
 	tmp := &InFile{
-		storeByID:  make(map[string]string),
-		storeByURL: make(map[string]string),
-		filePath:   path,
+		storeByID: make(map[string]string),
+		filePath:  path,
 	}
 	if err := tmp.loadCacheFromFile(); err != nil {
 		//Данная ошибка фатальна, так как означает что данные повреждены или операция I/O вызывает ошибки!
@@ -40,37 +37,24 @@ func NewFileStorage(path string) *InFile {
 
 // InFile простое птокобезопасное хранилище на map реализующее интерфейс InFile, но хранящее свои данные в файле
 type InFile struct {
-	storeByID  map[string]string
-	storeByURL map[string]string
-	filePath   string
-	f          *os.File
-	lock       sync.RWMutex
+	storeByID map[string]string
+	filePath  string
+	f         *os.File
+	lock      sync.RWMutex
 }
 
 func (fs *InFile) GenIDByURL(url string) (string, error) {
 	fs.lock.Lock()
 	defer fs.lock.Unlock()
 
-	ID, isExists := fs.storeByURL[url]
-	if isExists {
-		return ID, nil
-	}
-
-	newID := common.GenRandomString(ShortURLLen)
-	_, IDIsExists := fs.storeByID[newID]
-	counter := 1
-
-	for IDIsExists {
-		//Исключения случая совпадения, он крайне маловероятен, но все же...
-		newID = common.GenRandomString(ShortURLLen)
-		_, IDIsExists = fs.storeByID[newID]
-		counter++
-		if counter >= 128 {
-			return "", errors.New("can't generate new ID")
+	newID := common.GenHashedString(url)
+	if val, IDIsExists := fs.storeByID[newID]; IDIsExists {
+		if val == url {
+			return newID, nil
 		}
+		return "", errors.New("can't generate new ID")
 	}
 
-	fs.storeByURL[url] = newID
 	fs.storeByID[newID] = url
 
 	err := fs.appendToFile(Record{
@@ -155,7 +139,6 @@ func (fs *InFile) loadCacheFromFile() error {
 			return err
 		}
 		fs.storeByID[rec.ID] = rec.URL
-		fs.storeByURL[rec.URL] = rec.ID
 	}
 	return nil
 }

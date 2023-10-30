@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -13,12 +14,15 @@ func init() {
 
 func TestInMemory_GetURLByID(t *testing.T) {
 	type fields struct {
-		storeByID  map[string]string
-		storeByURL map[string]string
+		storeByID map[string]string
 	}
 	type args struct {
 		ID string
 	}
+
+	testURL := "https://test.com"
+	testID := common.GenHashedString(testURL)
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -29,17 +33,15 @@ func TestInMemory_GetURLByID(t *testing.T) {
 		{
 			name: "record exist",
 			fields: fields{
-				storeByID:  map[string]string{"fwrefw": "https://test.com"},
-				storeByURL: map[string]string{"https://test.com": "fwrefw"},
+				storeByID: map[string]string{testID: testURL},
 			},
-			args: struct{ ID string }{ID: "fwrefw"},
-			want: "https://test.com",
+			args: struct{ ID string }{ID: testID},
+			want: testURL,
 		},
 		{
 			name: "record not exist",
 			fields: fields{
-				storeByID:  map[string]string{"fwrefw": "https://test.com"},
-				storeByURL: map[string]string{"https://test.com": "fwrefw"},
+				storeByID: map[string]string{testID: testURL},
 			},
 			args:    struct{ ID string }{ID: "fwrefw3"},
 			want:    "",
@@ -50,8 +52,7 @@ func TestInMemory_GetURLByID(t *testing.T) {
 		test := tt
 		t.Run(test.name, func(t *testing.T) {
 			ims := &InMemory{
-				storeByID:  test.fields.storeByID,
-				storeByURL: test.fields.storeByURL,
+				storeByID: test.fields.storeByID,
 			}
 			defer func() {
 				err := ims.Close()
@@ -77,6 +78,10 @@ func TestInMemory_GenIDByURL(t *testing.T) {
 	type args struct {
 		url string
 	}
+
+	testURL := "https://test.com"
+	testID := common.GenHashedString(testURL)
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -86,15 +91,11 @@ func TestInMemory_GenIDByURL(t *testing.T) {
 	}{
 		{
 			name: "generate from existed URL",
-			fields: struct {
-				storeByID  map[string]string
-				storeByURL map[string]string
-			}{
-				storeByID:  map[string]string{"fwrefw": "https://test.com"},
-				storeByURL: map[string]string{"https://test.com": "fwrefw"},
+			fields: fields{
+				storeByID: map[string]string{testID: testURL},
 			},
-			args:    struct{ url string }{url: "https://test.com"},
-			want:    "fwrefw",
+			args:    struct{ url string }{url: testURL},
+			want:    testID,
 			wantErr: false,
 		},
 	}
@@ -103,8 +104,7 @@ func TestInMemory_GenIDByURL(t *testing.T) {
 		test := tt
 		t.Run(test.name, func(t *testing.T) {
 			ims := &InMemory{
-				storeByID:  test.fields.storeByID,
-				storeByURL: test.fields.storeByURL,
+				storeByID: test.fields.storeByID,
 			}
 			defer func() {
 				err := ims.Close()

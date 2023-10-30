@@ -52,7 +52,7 @@ func TestRouter_POST(t *testing.T) {
 			baseURL: "http://example.com",
 			want: want{
 				statusCode: http.StatusCreated,
-				body:       "http://example.com/rfdsgd",
+				body:       "http://example.com/" + memory.MockID2,
 			},
 		},
 		{
@@ -61,7 +61,7 @@ func TestRouter_POST(t *testing.T) {
 			baseURL: "http://example.com",
 			want: want{
 				statusCode: http.StatusCreated,
-				body:       "http://example.com/srewfrEW",
+				body:       "http://example.com/" + memory.MockID1,
 			},
 		},
 	}
@@ -130,7 +130,7 @@ func TestRouter_POST_JSON(t *testing.T) {
 			want: want{
 				statusCode: http.StatusCreated,
 				json:       true,
-				body:       api.AddURLResponse{Result: "http://example.com/rfdsgd"},
+				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID2},
 			},
 		},
 		{
@@ -141,7 +141,7 @@ func TestRouter_POST_JSON(t *testing.T) {
 			want: want{
 				statusCode: http.StatusCreated,
 				json:       true,
-				body:       api.AddURLResponse{Result: "http://example.com/srewfrEW"},
+				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID1},
 			},
 		},
 		{
@@ -235,7 +235,7 @@ func TestRouter_GET(t *testing.T) {
 		},
 		{
 			name: "Test right URL #1",
-			url:  "/rfdsgd",
+			url:  "/" + memory.MockID2,
 			want: want{
 				statusCode: 307,
 				location:   "http://test.com/test",
@@ -243,7 +243,7 @@ func TestRouter_GET(t *testing.T) {
 		},
 		{
 			name: "Test right URL #2",
-			url:  "/srewfrEW",
+			url:  "/" + memory.MockID1,
 			want: want{
 				statusCode: 307,
 				location:   "http://test.com/test?v=3",
@@ -335,7 +335,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			name:   "Test right GET URL #1",
 			body:   "",
 			method: http.MethodGet,
-			reqURL: "/rfdsgd",
+			reqURL: "/" + memory.MockID2,
 			want: want{
 				statusCode: http.StatusTemporaryRedirect,
 			},
