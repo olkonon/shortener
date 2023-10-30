@@ -71,7 +71,12 @@ func TestHandler_POST(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			h := New(memory.NewMockStorage(), test.baseURL)
+			store := memory.NewMockStorage()
+			defer func() {
+				err := store.Close()
+				require.NoError(t, err)
+			}()
+			h := New(store, test.baseURL)
 			h.POST(w, request)
 			result := w.Result()
 
@@ -145,7 +150,12 @@ func TestHandler_POST_JSON(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader(reqBody))
 			request.Header.Set(ContentTypeHeader, ContentTypeApplicationJSON)
 			w := httptest.NewRecorder()
-			h := New(memory.NewMockStorage(), test.baseURL)
+			store := memory.NewMockStorage()
+			defer func() {
+				err := store.Close()
+				require.NoError(t, err)
+			}()
+			h := New(store, test.baseURL)
 			h.PostJSON(w, request)
 			result := w.Result()
 			assert.Equal(t, test.want.statusCode, result.StatusCode)
@@ -195,7 +205,12 @@ func TestHandler_GET(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			w := httptest.NewRecorder()
-			h := New(memory.NewMockStorage(), common.DefaultBaseURL)
+			store := memory.NewMockStorage()
+			defer func() {
+				err := store.Close()
+				require.NoError(t, err)
+			}()
+			h := New(store, common.DefaultBaseURL)
 			h.GET(w, request)
 			result := w.Result()
 

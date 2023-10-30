@@ -122,11 +122,23 @@ MSG=$(shortenertestbeta -test.v -test.run=^TestIteration9$ \
 # shellcheck disable=SC2181
 if [ $? -eq 0 ]; then
   echo "==> Test INC_9 ..... [OK]"
-  rm 65118D10-CB73-41FA-B4EE-9D5685AD310D.json
-  rm /tmp/short-url-db.json
+  if test -f "65118D10-CB73-41FA-B4EE-9D5685AD310D.json";
+  then
+    rm 65118D10-CB73-41FA-B4EE-9D5685AD310D.json
+  fi
+  if test -f "/tmp/short-url-db.json";
+  then
+    rm /tmp/short-url-db.json
+  fi
 else
-  rm 65118D10-CB73-41FA-B4EE-9D5685AD310D.json
-  rm /tmp/short-url-db.json
+  if test -f "65118D10-CB73-41FA-B4EE-9D5685AD310D.json";
+  then
+    rm 65118D10-CB73-41FA-B4EE-9D5685AD310D.json
+  fi
+  if test -f "/tmp/short-url-db.json";
+  then
+    rm /tmp/short-url-db.json
+  fi
   echo "$MSG"
   echo "==> Test INC_9 ... [FAIL]"
   exit 128

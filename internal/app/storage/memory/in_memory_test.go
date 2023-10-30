@@ -2,6 +2,7 @@ package memory
 
 import (
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 	"io"
 	"testing"
 )
@@ -52,6 +53,10 @@ func TestInMemory_GetURLByID(t *testing.T) {
 				storeByID:  test.fields.storeByID,
 				storeByURL: test.fields.storeByURL,
 			}
+			defer func() {
+				err := ims.Close()
+				require.NoError(t, err)
+			}()
 			got, err := ims.GetURLByID(test.args.ID)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GetURLByID() error = %v, wantErr %v", err, test.wantErr)
@@ -101,6 +106,10 @@ func TestInMemory_GenIDByURL(t *testing.T) {
 				storeByID:  test.fields.storeByID,
 				storeByURL: test.fields.storeByURL,
 			}
+			defer func() {
+				err := ims.Close()
+				require.NoError(t, err)
+			}()
 			got, err := ims.GenIDByURL(test.args.url)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GenIDByURL() error = %v, wantErr %v", err, test.wantErr)

@@ -35,7 +35,9 @@ func TestFileStorage_GetURLByID(t *testing.T) {
 		ID:  "fd5345",
 	})
 	require.NoError(t, err)
-	store = nil
+
+	err = store.Close()
+	require.NoError(t, err)
 
 	tests := []struct {
 		name    string
@@ -76,6 +78,10 @@ func TestFileStorage_GetURLByID(t *testing.T) {
 		test := tt
 		t.Run(test.name, func(t *testing.T) {
 			fs := NewFileStorage(filename)
+			defer func() {
+				err := fs.Close()
+				require.NoError(t, err)
+			}()
 			got, err := fs.GetURLByID(test.id)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GetURLByID() error = %v, wantErr %v", err, test.wantErr)
@@ -111,8 +117,10 @@ func TestFileStorage_GenIDByURL(t *testing.T) {
 		ID:  "fd5345",
 	})
 	require.NoError(t, err)
-	store = nil
+
+	err = store.Close()
 	require.NoError(t, err)
+
 	tests := []struct {
 		name    string
 		url     string
@@ -143,6 +151,10 @@ func TestFileStorage_GenIDByURL(t *testing.T) {
 		test := tt
 		t.Run(test.name, func(t *testing.T) {
 			fs := NewFileStorage(filename)
+			defer func() {
+				err := fs.Close()
+				require.NoError(t, err)
+			}()
 			got, err := fs.GenIDByURL(test.url)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GenIDByURL() error = %v, wantErr %v", err, test.wantErr)

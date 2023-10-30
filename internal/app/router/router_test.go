@@ -70,7 +70,12 @@ func TestRouter_POST(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			r := New(handler.New(memory.NewMockStorage(), test.baseURL))
+			store := memory.NewMockStorage()
+			defer func() {
+				err := store.Close()
+				require.NoError(t, err)
+			}()
+			r := New(handler.New(store, test.baseURL))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -177,7 +182,13 @@ func TestRouter_POST_JSON(t *testing.T) {
 				request.Header.Set(handler.ContentEncodingHeader, "gzip")
 			}
 			w := httptest.NewRecorder()
-			r := New(handler.New(memory.NewMockStorage(), test.baseURL))
+			store := memory.NewMockStorage()
+			defer func() {
+				// Кажется бессмысленным усложнением, но кто знает как поменяется реализация в будущем?
+				err := store.Close()
+				require.NoError(t, err)
+			}()
+			r := New(handler.New(store, test.baseURL))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -244,7 +255,12 @@ func TestRouter_GET(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			w := httptest.NewRecorder()
-			r := New(handler.New(memory.NewMockStorage(), common.DefaultBaseURL))
+			store := memory.NewMockStorage()
+			defer func() {
+				err := store.Close()
+				require.NoError(t, err)
+			}()
+			r := New(handler.New(store, common.DefaultBaseURL))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -339,7 +355,12 @@ func TestRouter_ServeHTTP(t *testing.T) {
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.reqURL, strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			h := handler.New(memory.NewMockStorage(), common.DefaultBaseURL)
+			store := memory.NewMockStorage()
+			defer func() {
+				err := store.Close()
+				require.NoError(t, err)
+			}()
+			h := handler.New(store, common.DefaultBaseURL)
 			r := New(h)
 			r.ServeHTTP(w, request)
 			result := w.Result()

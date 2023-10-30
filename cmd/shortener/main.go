@@ -43,4 +43,8 @@ func main() {
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Error("Start HTTP server error: ", err)
 	}
+	//Корректно освобождаем ресурсы бэкенда
+	if err := storageBackend.Close(); err != nil {
+		log.Error("Close Storage error: ", err)
+	}
 }

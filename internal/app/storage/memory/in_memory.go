@@ -61,3 +61,7 @@ func (im *InMemory) GetURLByID(ID string) (string, error) {
 	}
 	return url, nil
 }
+
+func (im *InMemory) Close() error {
+	return nil
+}

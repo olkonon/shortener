@@ -28,6 +28,13 @@ func NewFileStorage(path string) *InFile {
 		//Данная ошибка фатальна, так как означает что данные повреждены или операция I/O вызывает ошибки!
 		log.Fatal(err)
 	}
+	//Создание файла если нет или добавление в конец если есть
+	if f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600); err != nil {
+		//Данная ошибка фатальна, так как означает что операция I/O вызывает ошибки!
+		log.Fatal(err)
+	} else {
+		tmp.f = f
+	}
 	return tmp
 }
 
@@ -36,6 +43,7 @@ type InFile struct {
 	storeByID  map[string]string
 	storeByURL map[string]string
 	filePath   string
+	f          *os.File
 	lock       sync.RWMutex
 }
 
@@ -83,36 +91,36 @@ func (fs *InFile) GetURLByID(ID string) (string, error) {
 	return url, nil
 }
 
+func (fs *InFile) Close() error {
+	fs.lock.Lock()
+	defer fs.lock.Unlock()
+
+	if fs.f != nil {
+		return fs.f.Close()
+	}
+	return nil
+}
+
 func (fs *InFile) appendToFile(rec Record) error {
 	data, err := json.Marshal(rec)
 	if err != nil {
 		return err
 	}
 
-	//Создание файла если нет или добавление в конец если есть
-	f, err := os.OpenFile(fs.filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-	if err != nil {
-		return err
-	}
-	//Авто закрытие файла при выходе из функции
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Error("Close file error:", err)
-		}
-	}()
-
 	//Записываем данные
-	_, err = f.Write(data)
+	_, err = fs.f.Write(data)
 	if err != nil {
 		return err
 	}
 	//Записываем разделитель
-	_, err = f.Write([]byte("\n"))
+	_, err = fs.f.Write([]byte("\n"))
 	if err != nil {
 		return err
 	}
-	//Вызываем sync для записи файла на диск
-	err = f.Sync()
+	//Вызываем sync для гарантии не потери данных (замедлит работу, но существенно повысит надежность,
+	//так количество операций записи много меньше количества операций чтения, существенного влияния на
+	//производительность сервиса оказать не должно)
+	err = fs.f.Sync()
 	if err != nil {
 		return err
 	}
