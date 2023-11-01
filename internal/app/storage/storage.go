@@ -6,4 +6,6 @@ type Storage interface {
 	GenIDByURL(url string) (string, error)
 	//GetURLByID возвращает URL соответствующий ID сокращенной ссылки
 	GetURLByID(id string) (string, error)
+	//Close корректно завершает работу любого Storage
+	Close() error
 }
