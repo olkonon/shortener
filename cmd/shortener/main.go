@@ -24,8 +24,13 @@ func main() {
 		storageBackend = file.NewFileStorage(appConfig.StorageFilePath)
 	}
 
+	handlerConf := handler.Config{
+		BaseURL: appConfig.BaseURL,
+		DSN:     appConfig.DSN,
+		Store:   storageBackend,
+	}
 	server := &http.Server{
-		Handler: router.New(handler.New(storageBackend, appConfig.BaseURL)),
+		Handler: router.New(handler.New(handlerConf)),
 		Addr:    appConfig.ListenAddress,
 	}
 

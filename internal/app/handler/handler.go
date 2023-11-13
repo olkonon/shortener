@@ -1,15 +1,19 @@
 package handler
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 	"github.com/olkonon/shortener/internal/app/api"
 	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/olkonon/shortener/internal/app/storage"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
+	"time"
 )
 
 const (
@@ -18,15 +22,23 @@ const (
 	ContentTypeApplicationJSON = "application/json"
 )
 
-func New(store storage.Storage, baseURL string) *Handler {
+func New(config Config) *Handler {
 	return &Handler{
-		store:   store,
-		baseURL: baseURL,
+		store:   config.Store,
+		baseURL: config.BaseURL,
+		dsn:     config.DSN,
 	}
+}
+
+type Config struct {
+	BaseURL string
+	DSN     string
+	Store   storage.Storage
 }
 
 type Handler struct {
 	store   storage.Storage
+	dsn     string
 	baseURL string
 }
 
@@ -114,4 +126,28 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 	if _, tmpErr := w.Write(buf); tmpErr != nil {
 		log.Error(tmpErr)
 	}
+}
+
+func (h Handler) Ping(w http.ResponseWriter, r *http.Request) {
+	if h.dsn == "" {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	db, err := sql.Open("postgres", h.dsn)
+	if err != nil {
+		log.Error("DB connect error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err = db.PingContext(ctx); err != nil {
+		log.Error("DB Ping error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

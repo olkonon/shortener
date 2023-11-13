@@ -75,7 +75,10 @@ func TestRouter_POST(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			r := New(handler.New(store, test.baseURL))
+			r := New(handler.New(handler.Config{
+				BaseURL: test.baseURL,
+				Store:   store,
+			}))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -188,7 +191,10 @@ func TestRouter_POST_JSON(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			r := New(handler.New(store, test.baseURL))
+			r := New(handler.New(handler.Config{
+				BaseURL: test.baseURL,
+				Store:   store,
+			}))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -260,7 +266,10 @@ func TestRouter_GET(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			r := New(handler.New(store, common.DefaultBaseURL))
+			r := New(handler.New(handler.Config{
+				BaseURL: common.DefaultBaseURL,
+				Store:   store,
+			}))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -360,8 +369,10 @@ func TestRouter_ServeHTTP(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			h := handler.New(store, common.DefaultBaseURL)
-			r := New(h)
+			r := New(handler.New(handler.Config{
+				BaseURL: common.DefaultBaseURL,
+				Store:   store,
+			}))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 

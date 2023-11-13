@@ -76,7 +76,10 @@ func TestHandler_POST(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			h := New(store, test.baseURL)
+			h := New(Config{
+				BaseURL: test.baseURL,
+				Store:   store,
+			})
 			h.POST(w, request)
 			result := w.Result()
 
@@ -155,7 +158,10 @@ func TestHandler_POST_JSON(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			h := New(store, test.baseURL)
+			h := New(Config{
+				BaseURL: test.baseURL,
+				Store:   store,
+			})
 			h.PostJSON(w, request)
 			result := w.Result()
 			assert.Equal(t, test.want.statusCode, result.StatusCode)
@@ -210,7 +216,10 @@ func TestHandler_GET(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			h := New(store, common.DefaultBaseURL)
+			h := New(Config{
+				BaseURL: common.DefaultBaseURL,
+				Store:   store,
+			})
 			h.GET(w, request)
 			result := w.Result()
 

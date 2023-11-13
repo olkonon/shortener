@@ -143,3 +143,22 @@ else
   echo "==> Test INC_9 ... [FAIL]"
   exit 128
 fi
+
+# Increment 10
+docker stop $(docker ps -a -q) > /dev/null
+docker rm -f $(docker ps -a -q) > /dev/null
+docker run --name iter10-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d postgres > /dev/null
+sleep 2
+MSG=$(shortenertestbeta -test.v -test.run=^TestIteration10$ \
+                    -binary-path=cmd/shortener/shortener \
+                    -source-path=. \
+                    -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable')
+# shellcheck disable=SC2181
+if [ $? -eq 0 ]; then
+  echo "==> Test INC_10 ..... [OK]"
+else
+  echo "$MSG"
+  echo "==> Test INC_10 ... [FAIL]"
+  exit 128
+fi
+
