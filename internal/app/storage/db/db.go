@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/lib/pq"
 	"github.com/olkonon/shortener/internal/app/common"
+	"github.com/olkonon/shortener/internal/app/storage"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
@@ -59,6 +60,37 @@ func (dbs *DatabaseStore) GenIDByURL(ctx context.Context, url string) (string, e
 		return newID, nil
 	}
 	return "", err
+}
+
+func (dbs *DatabaseStore) BatchSave(ctx context.Context, data []storage.BatchSaveRequest) ([]storage.BatchSaveResponse, error) {
+	result := make([]storage.BatchSaveResponse, len(data))
+	tx, err := dbs.db.Begin()
+	if err != nil {
+		log.Error(err)
+		return result, err
+	}
+	//Откат транзакции если Commit не прошел
+	defer tx.Rollback()
+
+	insertStmt, err := tx.PrepareContext(ctx, InsertToTable)
+	if err != nil {
+		log.Error(err)
+		return result, err
+	}
+
+	txStmt := tx.StmtContext(ctx, insertStmt)
+
+	for i, val := range data {
+		newID := common.GenHashedString(val.OriginalURL)
+		if _, err = txStmt.ExecContext(ctx, newID, val.OriginalURL); err != nil {
+			return result, err
+		}
+
+		result[i].CorrelationID = val.CorrelationID
+		result[i].ShortID = newID
+	}
+
+	return result, tx.Commit()
 }
 
 func (dbs *DatabaseStore) GetURLByID(ctx context.Context, ID string) (string, error) {

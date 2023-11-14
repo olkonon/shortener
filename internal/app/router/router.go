@@ -15,6 +15,7 @@ func New(h *handler.Handler) *mux.Router {
 	r.HandleFunc("/", h.POST).Methods(http.MethodPost)
 	r.HandleFunc("/ping", h.Ping).Methods(http.MethodGet)
 	r.HandleFunc("/{id}", h.GET).Methods(http.MethodGet)
+	r.HandleFunc("/api/shorten/batch", h.BatchPostJSON).Methods(http.MethodPost)
 	r.HandleFunc("/api/shorten", h.PostJSON).Methods(http.MethodPost)
 	return r
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/olkonon/shortener/internal/app/common"
+	"github.com/olkonon/shortener/internal/app/storage"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
@@ -63,6 +64,41 @@ func (fs *InFile) GenIDByURL(_ context.Context, url string) (string, error) {
 		URL: url,
 	})
 	return newID, err
+}
+
+func (fs *InFile) BatchSave(_ context.Context, data []storage.BatchSaveRequest) ([]storage.BatchSaveResponse, error) {
+	fs.lock.Lock()
+	defer fs.lock.Unlock()
+
+	result := make([]storage.BatchSaveResponse, len(data))
+	for i, val := range data {
+		newID := common.GenHashedString(val.OriginalURL)
+		if existsURL, IDIsExists := fs.storeByID[newID]; IDIsExists {
+			if existsURL == val.OriginalURL {
+				result[i] = storage.BatchSaveResponse{
+					CorrelationID: val.CorrelationID,
+					ShortID:       newID,
+				}
+				continue
+			}
+			return result, errors.New("can't generate new ID")
+		}
+
+		err := fs.appendToFile(Record{
+			ID:  newID,
+			URL: val.OriginalURL,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		fs.storeByID[newID] = val.OriginalURL
+		result[i] = storage.BatchSaveResponse{
+			CorrelationID: val.CorrelationID,
+			ShortID:       newID,
+		}
+	}
+	return result, nil
 }
 
 func (fs *InFile) GetURLByID(_ context.Context, ID string) (string, error) {

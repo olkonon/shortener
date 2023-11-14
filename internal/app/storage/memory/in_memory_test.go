@@ -3,7 +3,9 @@ package memory
 import (
 	"context"
 	"github.com/olkonon/shortener/internal/app/common"
+	"github.com/olkonon/shortener/internal/app/storage"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
 	"testing"
@@ -121,4 +123,48 @@ func TestInMemory_GenIDByURL(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestInMemory_BatchSave(t *testing.T) {
+	ims := NewInMemory()
+	testURL1 := "https://test.com"
+	testID1 := common.GenHashedString(testURL1)
+	testURL2 := "https://test2.com"
+	testID2 := common.GenHashedString(testURL2)
+	testURL3 := "https://test3.com"
+	testID3 := common.GenHashedString(testURL3)
+
+	request := []storage.BatchSaveRequest{
+		{
+			OriginalURL:   testURL1,
+			CorrelationID: "1",
+		},
+		{
+			OriginalURL:   testURL2,
+			CorrelationID: "2",
+		},
+		{
+			OriginalURL:   testURL3,
+			CorrelationID: "3",
+		},
+	}
+
+	response := []storage.BatchSaveResponse{
+		{
+			CorrelationID: "1",
+			ShortID:       testID1,
+		},
+		{
+			CorrelationID: "2",
+			ShortID:       testID2,
+		},
+		{
+			CorrelationID: "3",
+			ShortID:       testID3,
+		},
+	}
+
+	res, err := ims.BatchSave(context.Background(), request)
+	require.NoError(t, err)
+	assert.Equal(t, res, response)
 }
