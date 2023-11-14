@@ -52,7 +52,7 @@ func TestHandler_POST(t *testing.T) {
 			body:    "http://test.com/test",
 			baseURL: "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       "http://example.com/" + memory.MockID2,
 			},
 		},
@@ -61,7 +61,7 @@ func TestHandler_POST(t *testing.T) {
 			body:    "http://test.com/test?v=3",
 			baseURL: "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       "http://example.com/" + memory.MockID1,
 			},
 		},
@@ -130,7 +130,7 @@ func TestHandler_POST_JSON(t *testing.T) {
 			baseURL: "http://example.com",
 			want: want{
 				json:       true,
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID2},
 			},
 		},
@@ -140,7 +140,7 @@ func TestHandler_POST_JSON(t *testing.T) {
 			baseURL: "http://example.com",
 			want: want{
 				json:       true,
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID1},
 			},
 		},
@@ -199,7 +199,7 @@ func TestHandler_GET(t *testing.T) {
 			},
 		},
 		{
-			name: "Test ot exists URL #2",
+			name: "Test not exists URL #2",
 			url:  "/httph32ogewfrnophgeprge",
 			want: want{
 				statusCode: 404,

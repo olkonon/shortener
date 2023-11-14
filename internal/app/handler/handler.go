@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -67,6 +68,11 @@ func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := h.store.GenIDByURL(r.Context(), longURL)
+	if errors.Is(err, storage.ErrDuplicateURL) {
+		w.WriteHeader(http.StatusConflict)
+		w.Write([]byte(fmt.Sprintf("%s/%s", h.baseURL, id)))
+		return
+	}
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -79,6 +85,7 @@ func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
+	successStatusCode := http.StatusCreated
 	if r.Header.Get(ContentTypeHeader) != ContentTypeApplicationJSON {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -106,8 +113,12 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.store.GenIDByURL(r.Context(), data.URL)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		if errors.Is(err, storage.ErrDuplicateURL) {
+			successStatusCode = http.StatusConflict
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	response := api.AddURLResponse{
@@ -122,7 +133,7 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set(ContentTypeHeader, ContentTypeApplicationJSON)
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(successStatusCode)
 	if _, tmpErr := w.Write(buf); tmpErr != nil {
 		log.Error(tmpErr)
 	}

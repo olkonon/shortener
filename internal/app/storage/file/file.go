@@ -52,7 +52,7 @@ func (fs *InFile) GenIDByURL(_ context.Context, url string) (string, error) {
 	newID := common.GenHashedString(url)
 	if val, IDIsExists := fs.storeByID[newID]; IDIsExists {
 		if val == url {
-			return newID, nil
+			return newID, storage.ErrDuplicateURL
 		}
 		return "", errors.New("can't generate new ID")
 	}

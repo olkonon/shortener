@@ -197,5 +197,20 @@ else
   exit 128
 fi
 
-
+# Increment 13
+docker stop $(docker ps -a -q) > /dev/null
+docker rm -f $(docker ps -a -q) > /dev/null
+docker run --name iter13-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d postgres > /dev/null
+sleep 2
+MSG=$(shortenertestbeta -test.v -test.run=^TestIteration13$ \
+                    -binary-path=cmd/shortener/shortener \
+                    -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable')
+# shellcheck disable=SC2181
+if [ $? -eq 0 ]; then
+  echo "==> Test INC_13 .... [OK]"
+else
+  echo "$MSG"
+  echo "==> Test INC_13 .. [FAIL]"
+  exit 128
+fi
 

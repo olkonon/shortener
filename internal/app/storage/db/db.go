@@ -15,10 +15,10 @@ import (
 const CreateTable = `CREATE TABLE IF NOT EXISTS urls (
 		short_url varchar(10) NOT NULL,
     	original_url varchar(256) NOT NULL,
-    	PRIMARY KEY (short_url,original_url)
+    	PRIMARY KEY (original_url)
 )`
 const SelectURLByID = `SELECT original_url FROM urls WHERE short_url=$1;`
-const InsertToTable = `INSERT INTO urls (short_url,original_url) VALUES ($1,$2) ON CONFLICT DO NOTHING`
+const InsertToTable = `INSERT INTO urls (short_url,original_url) VALUES ($1,$2)`
 
 func NewDatabaseStore(dsn string) *DatabaseStore {
 	db, err := sql.Open("postgres", dsn)
@@ -57,7 +57,7 @@ func (dbs *DatabaseStore) GenIDByURL(ctx context.Context, url string) (string, e
 		return newID, nil
 	}
 	if errors.As(err, &pgError) && pgError.Code == pgerrcode.UniqueViolation {
-		return newID, nil
+		return newID, storage.ErrDuplicateURL
 	}
 	return "", err
 }

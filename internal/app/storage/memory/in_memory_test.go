@@ -38,8 +38,9 @@ func TestInMemory_GetURLByID(t *testing.T) {
 			fields: fields{
 				storeByID: map[string]string{testID: testURL},
 			},
-			args: struct{ ID string }{ID: testID},
-			want: testURL,
+			args:    struct{ ID string }{ID: testID},
+			want:    testURL,
+			wantErr: false,
 		},
 		{
 			name: "record not exist",
@@ -99,7 +100,7 @@ func TestInMemory_GenIDByURL(t *testing.T) {
 			},
 			args:    struct{ url string }{url: testURL},
 			want:    testID,
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 

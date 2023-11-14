@@ -51,7 +51,7 @@ func TestRouter_POST(t *testing.T) {
 			body:    "http://test.com/test",
 			baseURL: "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       "http://example.com/" + memory.MockID2,
 			},
 		},
@@ -60,7 +60,7 @@ func TestRouter_POST(t *testing.T) {
 			body:    "http://test.com/test?v=3",
 			baseURL: "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       "http://example.com/" + memory.MockID1,
 			},
 		},
@@ -131,7 +131,7 @@ func TestRouter_POST_JSON(t *testing.T) {
 			contentType: handler.ContentTypeApplicationJSON,
 			baseURL:     "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				json:       true,
 				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID2},
 			},
@@ -142,7 +142,7 @@ func TestRouter_POST_JSON(t *testing.T) {
 			contentType: handler.ContentTypeApplicationJSON,
 			baseURL:     "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				json:       true,
 				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID1},
 			},
@@ -164,7 +164,7 @@ func TestRouter_POST_JSON(t *testing.T) {
 			gzip:        true,
 			baseURL:     "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				json:       false,
 			},
 		},
@@ -328,7 +328,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			method: http.MethodPost,
 			reqURL: "/",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 			},
 		},
 		{
@@ -337,7 +337,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			method: http.MethodPost,
 			reqURL: "/",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 			},
 		},
 		{

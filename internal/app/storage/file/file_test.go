@@ -141,19 +141,19 @@ func TestFileStorage_GenIDByURL(t *testing.T) {
 			name:    "Test generate from existed URL #1",
 			url:     "https://test.com",
 			want:    testID1,
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name:    "Test generate from existed URL #2",
 			url:     "https://test2.com",
 			want:    testID2,
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name:    "Test generate from existed URL #3",
 			url:     "https://test3.com",
 			want:    testID3,
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 

@@ -1,6 +1,12 @@
 package storage
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+// ErrDuplicateURL говорит о том что пытаются добавить уже существующий URL
+var ErrDuplicateURL = errors.New("duplicate! URL is exists")
 
 // Storage интерфейс для хранилища данных
 type Storage interface {

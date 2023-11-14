@@ -28,7 +28,6 @@ func main() {
 		storageBackend = file.NewFileStorage(appConfig.StorageFilePath)
 	}
 
-	log.Infof(appConfig.DSN, appConfig.StorageFilePath, storageBackend)
 	handlerConf := handler.Config{
 		BaseURL: appConfig.BaseURL,
 		DSN:     appConfig.DSN,
