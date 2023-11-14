@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -87,7 +88,7 @@ func TestFileStorage_GetURLByID(t *testing.T) {
 				err := fs.Close()
 				require.NoError(t, err)
 			}()
-			got, err := fs.GetURLByID(test.id)
+			got, err := fs.GetURLByID(context.Background(), test.id)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GetURLByID() error = %v, wantErr %v", err, test.wantErr)
 				return
@@ -162,7 +163,7 @@ func TestFileStorage_GenIDByURL(t *testing.T) {
 				err := fs.Close()
 				require.NoError(t, err)
 			}()
-			got, err := fs.GenIDByURL(test.url)
+			got, err := fs.GenIDByURL(context.Background(), test.url)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GenIDByURL() error = %v, wantErr %v", err, test.wantErr)
 				return

@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"errors"
 	"github.com/olkonon/shortener/internal/app/common"
 	"sync"
@@ -18,7 +19,7 @@ type InMemory struct {
 	lock      sync.RWMutex
 }
 
-func (im *InMemory) GenIDByURL(url string) (string, error) {
+func (im *InMemory) GenIDByURL(_ context.Context, url string) (string, error) {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 
@@ -35,7 +36,7 @@ func (im *InMemory) GenIDByURL(url string) (string, error) {
 	return newID, nil
 }
 
-func (im *InMemory) GetURLByID(ID string) (string, error) {
+func (im *InMemory) GetURLByID(_ context.Context, ID string) (string, error) {
 	im.lock.RLock()
 	defer im.lock.RUnlock()
 

@@ -2,6 +2,7 @@ package file
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/olkonon/shortener/internal/app/common"
@@ -43,7 +44,7 @@ type InFile struct {
 	lock      sync.RWMutex
 }
 
-func (fs *InFile) GenIDByURL(url string) (string, error) {
+func (fs *InFile) GenIDByURL(_ context.Context, url string) (string, error) {
 	fs.lock.Lock()
 	defer fs.lock.Unlock()
 
@@ -64,7 +65,7 @@ func (fs *InFile) GenIDByURL(url string) (string, error) {
 	return newID, err
 }
 
-func (fs *InFile) GetURLByID(ID string) (string, error) {
+func (fs *InFile) GetURLByID(_ context.Context, ID string) (string, error) {
 	fs.lock.RLock()
 	defer fs.lock.RUnlock()
 

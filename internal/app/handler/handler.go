@@ -44,7 +44,7 @@ type Handler struct {
 
 func (h *Handler) GET(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	longURL, err := h.store.GetURLByID(vars["id"])
+	longURL, err := h.store.GetURLByID(r.Context(), vars["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -66,7 +66,7 @@ func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.store.GenIDByURL(longURL)
+	id, err := h.store.GenIDByURL(r.Context(), longURL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -104,7 +104,7 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.store.GenIDByURL(data.URL)
+	id, err := h.store.GenIDByURL(r.Context(), data.URL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -128,7 +128,7 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h Handler) Ping(w http.ResponseWriter, r *http.Request) {
+func (h Handler) Ping(w http.ResponseWriter, _ *http.Request) {
 	if h.dsn == "" {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

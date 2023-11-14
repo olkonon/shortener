@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -58,7 +59,7 @@ func TestInMemory_GetURLByID(t *testing.T) {
 				err := ims.Close()
 				require.NoError(t, err)
 			}()
-			got, err := ims.GetURLByID(test.args.ID)
+			got, err := ims.GetURLByID(context.Background(), test.args.ID)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GetURLByID() error = %v, wantErr %v", err, test.wantErr)
 				return
@@ -110,7 +111,7 @@ func TestInMemory_GenIDByURL(t *testing.T) {
 				err := ims.Close()
 				require.NoError(t, err)
 			}()
-			got, err := ims.GenIDByURL(test.args.url)
+			got, err := ims.GenIDByURL(context.Background(), test.args.url)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GenIDByURL() error = %v, wantErr %v", err, test.wantErr)
 				return
