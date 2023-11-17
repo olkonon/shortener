@@ -52,7 +52,7 @@ func TestHandler_POST(t *testing.T) {
 			body:    "http://test.com/test",
 			baseURL: "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       "http://example.com/" + memory.MockID2,
 			},
 		},
@@ -61,7 +61,7 @@ func TestHandler_POST(t *testing.T) {
 			body:    "http://test.com/test?v=3",
 			baseURL: "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       "http://example.com/" + memory.MockID1,
 			},
 		},
@@ -76,7 +76,10 @@ func TestHandler_POST(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			h := New(store, test.baseURL)
+			h := New(Config{
+				BaseURL: test.baseURL,
+				Store:   store,
+			})
 			h.POST(w, request)
 			result := w.Result()
 
@@ -127,7 +130,7 @@ func TestHandler_POST_JSON(t *testing.T) {
 			baseURL: "http://example.com",
 			want: want{
 				json:       true,
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID2},
 			},
 		},
@@ -137,7 +140,7 @@ func TestHandler_POST_JSON(t *testing.T) {
 			baseURL: "http://example.com",
 			want: want{
 				json:       true,
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID1},
 			},
 		},
@@ -155,7 +158,10 @@ func TestHandler_POST_JSON(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			h := New(store, test.baseURL)
+			h := New(Config{
+				BaseURL: test.baseURL,
+				Store:   store,
+			})
 			h.PostJSON(w, request)
 			result := w.Result()
 			assert.Equal(t, test.want.statusCode, result.StatusCode)
@@ -193,7 +199,7 @@ func TestHandler_GET(t *testing.T) {
 			},
 		},
 		{
-			name: "Test ot exists URL #2",
+			name: "Test not exists URL #2",
 			url:  "/httph32ogewfrnophgeprge",
 			want: want{
 				statusCode: 404,
@@ -210,7 +216,10 @@ func TestHandler_GET(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			h := New(store, common.DefaultBaseURL)
+			h := New(Config{
+				BaseURL: common.DefaultBaseURL,
+				Store:   store,
+			})
 			h.GET(w, request)
 			result := w.Result()
 

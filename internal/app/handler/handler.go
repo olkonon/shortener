@@ -1,15 +1,20 @@
 package handler
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 	"github.com/olkonon/shortener/internal/app/api"
 	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/olkonon/shortener/internal/app/storage"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
+	"time"
 )
 
 const (
@@ -18,21 +23,29 @@ const (
 	ContentTypeApplicationJSON = "application/json"
 )
 
-func New(store storage.Storage, baseURL string) *Handler {
+func New(config Config) *Handler {
 	return &Handler{
-		store:   store,
-		baseURL: baseURL,
+		store:   config.Store,
+		baseURL: config.BaseURL,
+		dsn:     config.DSN,
 	}
+}
+
+type Config struct {
+	BaseURL string
+	DSN     string
+	Store   storage.Storage
 }
 
 type Handler struct {
 	store   storage.Storage
+	dsn     string
 	baseURL string
 }
 
 func (h *Handler) GET(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	longURL, err := h.store.GetURLByID(vars["id"])
+	longURL, err := h.store.GetURLByID(r.Context(), vars["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -54,7 +67,12 @@ func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.store.GenIDByURL(longURL)
+	id, err := h.store.GenIDByURL(r.Context(), longURL)
+	if errors.Is(err, storage.ErrDuplicateURL) {
+		w.WriteHeader(http.StatusConflict)
+		w.Write([]byte(fmt.Sprintf("%s/%s", h.baseURL, id)))
+		return
+	}
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -67,6 +85,7 @@ func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
+	successStatusCode := http.StatusCreated
 	if r.Header.Get(ContentTypeHeader) != ContentTypeApplicationJSON {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -92,10 +111,14 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.store.GenIDByURL(data.URL)
+	id, err := h.store.GenIDByURL(r.Context(), data.URL)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		if errors.Is(err, storage.ErrDuplicateURL) {
+			successStatusCode = http.StatusConflict
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	response := api.AddURLResponse{
@@ -110,8 +133,95 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set(ContentTypeHeader, ContentTypeApplicationJSON)
+	w.WriteHeader(successStatusCode)
+	if _, tmpErr := w.Write(buf); tmpErr != nil {
+		log.Error(tmpErr)
+	}
+}
+
+func (h *Handler) BatchPostJSON(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get(ContentTypeHeader) != ContentTypeApplicationJSON {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data := make([]api.BatchAddURLRequest, 0)
+	err = json.Unmarshal(b, &data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Error("JSON deserialization error:", err)
+		return
+	}
+
+	if len(data) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Error("Empty request")
+		return
+	}
+
+	batchUpdate := make([]storage.BatchSaveRequest, len(data))
+	for i, val := range data {
+		//Проверка, что переданный URl корректный
+		if !val.IsValid() {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		batchUpdate[i].OriginalURL = val.OriginalURL
+		batchUpdate[i].CorrelationID = val.CorrelationID
+	}
+
+	batchResponse, err := h.store.BatchSave(r.Context(), batchUpdate)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	response := make([]api.BatchAddURLResponse, len(batchResponse))
+	for i, val := range batchResponse {
+		response[i].CorrelationID = val.CorrelationID
+		response[i].ShortURL = fmt.Sprintf("%s/%s", h.baseURL, val.ShortID)
+	}
+
+	buf, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Error("JSON serialization error:", err)
+		return
+	}
+
+	w.Header().Set(ContentTypeHeader, ContentTypeApplicationJSON)
 	w.WriteHeader(http.StatusCreated)
 	if _, tmpErr := w.Write(buf); tmpErr != nil {
 		log.Error(tmpErr)
 	}
+}
+
+func (h Handler) Ping(w http.ResponseWriter, _ *http.Request) {
+	if h.dsn == "" {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	db, err := sql.Open("postgres", h.dsn)
+	if err != nil {
+		log.Error("DB connect error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err = db.PingContext(ctx); err != nil {
+		log.Error("DB Ping error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

@@ -51,7 +51,7 @@ func TestRouter_POST(t *testing.T) {
 			body:    "http://test.com/test",
 			baseURL: "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       "http://example.com/" + memory.MockID2,
 			},
 		},
@@ -60,7 +60,7 @@ func TestRouter_POST(t *testing.T) {
 			body:    "http://test.com/test?v=3",
 			baseURL: "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				body:       "http://example.com/" + memory.MockID1,
 			},
 		},
@@ -75,7 +75,10 @@ func TestRouter_POST(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			r := New(handler.New(store, test.baseURL))
+			r := New(handler.New(handler.Config{
+				BaseURL: test.baseURL,
+				Store:   store,
+			}))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -128,7 +131,7 @@ func TestRouter_POST_JSON(t *testing.T) {
 			contentType: handler.ContentTypeApplicationJSON,
 			baseURL:     "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				json:       true,
 				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID2},
 			},
@@ -139,7 +142,7 @@ func TestRouter_POST_JSON(t *testing.T) {
 			contentType: handler.ContentTypeApplicationJSON,
 			baseURL:     "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				json:       true,
 				body:       api.AddURLResponse{Result: "http://example.com/" + memory.MockID1},
 			},
@@ -161,7 +164,7 @@ func TestRouter_POST_JSON(t *testing.T) {
 			gzip:        true,
 			baseURL:     "http://example.com",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 				json:       false,
 			},
 		},
@@ -188,7 +191,10 @@ func TestRouter_POST_JSON(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			r := New(handler.New(store, test.baseURL))
+			r := New(handler.New(handler.Config{
+				BaseURL: test.baseURL,
+				Store:   store,
+			}))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -260,7 +266,10 @@ func TestRouter_GET(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			r := New(handler.New(store, common.DefaultBaseURL))
+			r := New(handler.New(handler.Config{
+				BaseURL: common.DefaultBaseURL,
+				Store:   store,
+			}))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -319,7 +328,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			method: http.MethodPost,
 			reqURL: "/",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 			},
 		},
 		{
@@ -328,7 +337,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			method: http.MethodPost,
 			reqURL: "/",
 			want: want{
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusConflict,
 			},
 		},
 		{
@@ -360,8 +369,10 @@ func TestRouter_ServeHTTP(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			h := handler.New(store, common.DefaultBaseURL)
-			r := New(h)
+			r := New(handler.New(handler.Config{
+				BaseURL: common.DefaultBaseURL,
+				Store:   store,
+			}))
 			r.ServeHTTP(w, request)
 			result := w.Result()
 

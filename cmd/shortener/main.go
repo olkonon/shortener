@@ -7,6 +7,7 @@ import (
 	"github.com/olkonon/shortener/internal/app/handler"
 	"github.com/olkonon/shortener/internal/app/router"
 	"github.com/olkonon/shortener/internal/app/storage"
+	"github.com/olkonon/shortener/internal/app/storage/db"
 	"github.com/olkonon/shortener/internal/app/storage/file"
 	"github.com/olkonon/shortener/internal/app/storage/memory"
 	log "github.com/sirupsen/logrus"
@@ -20,12 +21,20 @@ func main() {
 	appConfig := config.Parse()
 
 	var storageBackend storage.Storage = memory.NewInMemory()
-	if appConfig.StorageFilePath != "" {
+
+	if appConfig.DSN != "" {
+		storageBackend = db.NewDatabaseStore(appConfig.DSN)
+	} else if appConfig.StorageFilePath != "" {
 		storageBackend = file.NewFileStorage(appConfig.StorageFilePath)
 	}
 
+	handlerConf := handler.Config{
+		BaseURL: appConfig.BaseURL,
+		DSN:     appConfig.DSN,
+		Store:   storageBackend,
+	}
 	server := &http.Server{
-		Handler: router.New(handler.New(storageBackend, appConfig.BaseURL)),
+		Handler: router.New(handler.New(handlerConf)),
 		Addr:    appConfig.ListenAddress,
 	}
 
