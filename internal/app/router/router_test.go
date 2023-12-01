@@ -7,7 +7,6 @@ import (
 	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/olkonon/shortener/internal/app/handler"
 	"github.com/olkonon/shortener/internal/app/storage/memory"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -18,7 +17,7 @@ import (
 )
 
 func init() {
-	logrus.SetOutput(io.Discard)
+	//logrus.SetOutput(io.Discard)
 }
 
 func TestRouter_POST(t *testing.T) {
@@ -75,10 +74,12 @@ func TestRouter_POST(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			r := New(handler.New(handler.Config{
+			h := handler.New(handler.Config{
 				BaseURL: test.baseURL,
 				Store:   store,
-			}))
+			})
+			request.AddCookie(h.MockTestUserCookie())
+			r := New(h)
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -191,10 +192,12 @@ func TestRouter_POST_JSON(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			r := New(handler.New(handler.Config{
+			h := handler.New(handler.Config{
 				BaseURL: test.baseURL,
 				Store:   store,
-			}))
+			})
+			r := New(h)
+			request.AddCookie(h.MockTestUserCookie())
 			r.ServeHTTP(w, request)
 			result := w.Result()
 
@@ -369,10 +372,12 @@ func TestRouter_ServeHTTP(t *testing.T) {
 				err := store.Close()
 				require.NoError(t, err)
 			}()
-			r := New(handler.New(handler.Config{
+			h := handler.New(handler.Config{
 				BaseURL: common.DefaultBaseURL,
 				Store:   store,
-			}))
+			})
+			r := New(h)
+			request.AddCookie(h.MockTestUserCookie())
 			r.ServeHTTP(w, request)
 			result := w.Result()
 

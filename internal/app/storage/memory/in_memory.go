@@ -29,7 +29,8 @@ func (im *InMemory) GenIDByURL(_ context.Context, url string, user string) (stri
 	}
 
 	newID := common.GenHashedString(url)
-	if val, IDIsExists := im.storeByID[user][newID]; IDIsExists {
+	userStore := im.storeByID[user]
+	if val, IDIsExists := userStore[newID]; IDIsExists {
 		if val == url {
 			return newID, storage.ErrDuplicateURL
 		}
@@ -89,6 +90,26 @@ func (im *InMemory) GetURLByID(_ context.Context, ID string) (string, error) {
 	}
 
 	return "", errors.New("unknown id")
+}
+
+func (im *InMemory) GetByUser(_ context.Context, user string) ([]storage.UserRecord, error) {
+	im.lock.RLock()
+	defer im.lock.RUnlock()
+
+	if urlList, isExists := im.storeByID[user]; isExists {
+		if len(urlList) == 0 {
+			return nil, storage.ErrUserURLListEmpty
+		}
+		result := make([]storage.UserRecord, 0)
+		for short, original := range urlList {
+			result = append(result, storage.UserRecord{
+				OriginalURL: original,
+				ShortID:     short,
+			})
+		}
+		return result, nil
+	}
+	return nil, storage.ErrUserURLListEmpty
 }
 
 func (im *InMemory) Close() error {

@@ -196,3 +196,23 @@ func (fs *InFile) loadCacheFromFile() error {
 	}
 	return nil
 }
+
+func (fs *InFile) GetByUser(_ context.Context, user string) ([]storage.UserRecord, error) {
+	fs.lock.RLock()
+	defer fs.lock.RUnlock()
+
+	if urlList, isExists := fs.storeByID[user]; isExists {
+		if len(urlList) == 0 {
+			return nil, storage.ErrUserURLListEmpty
+		}
+		result := make([]storage.UserRecord, 0)
+		for short, original := range urlList {
+			result = append(result, storage.UserRecord{
+				OriginalURL: original,
+				ShortID:     short,
+			})
+		}
+		return result, nil
+	}
+	return nil, storage.ErrUserURLListEmpty
+}

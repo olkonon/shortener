@@ -3,6 +3,7 @@ module github.com/olkonon/shortener
 go 1.21.3
 
 require (
+	github.com/google/uuid v1.4.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa

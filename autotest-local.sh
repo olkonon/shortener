@@ -215,18 +215,18 @@ else
 fi
 
 # Increment 14
-#docker stop $(docker ps -a -q) > /dev/null
-#docker rm -f $(docker ps -a -q) > /dev/null
-#docker run --name iter14-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d arm64v8/postgres > /dev/null
-#sleep 2
-#MSG=$(shortenertestbeta -test.v -test.run=^TestIteration14$ \
-#                    -binary-path=cmd/shortener/shortener \
-#                    -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable')
+docker stop $(docker ps -a -q) > /dev/null
+docker rm -f $(docker ps -a -q) > /dev/null
+docker run --name iter14-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d arm64v8/postgres > /dev/null
+sleep 2
+MSG=$(shortenertestbeta -test.v -test.run=^TestIteration14$ \
+                    -binary-path=cmd/shortener/shortener \
+                   -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable')
 # shellcheck disable=SC2181
-#if [ $? -eq 0 ]; then
-#  echo "==> Test INC_14 .... [OK]"
-#else
-#  echo "$MSG"
-#  echo "==> Test INC_14 .. [FAIL]"
-#  exit 128
-#fi
+if [ $? -eq 0 ]; then
+  echo "==> Test INC_14 .... [OK]"
+else
+  echo "$MSG"
+  echo "==> Test INC_14 .. [FAIL]"
+  exit 128
+fi

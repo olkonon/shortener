@@ -31,19 +31,19 @@ func TestFileStorage_GetURLByID(t *testing.T) {
 	err := store.appendToFile(Record{
 		URL:  "https://test.com",
 		ID:   testID1,
-		User: common.AnonymousUser,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
 		URL:  "https://test2.com",
 		ID:   testID2,
-		User: common.AnonymousUser,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
 		URL:  "https://test3.com",
 		ID:   testID3,
-		User: common.AnonymousUser,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 
@@ -118,19 +118,19 @@ func TestFileStorage_GenIDByURL(t *testing.T) {
 	err := store.appendToFile(Record{
 		URL:  "https://test.com",
 		ID:   testID1,
-		User: common.AnonymousUser,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
 		URL:  "https://test2.com",
 		ID:   testID2,
-		User: common.AnonymousUser,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
 		URL:  "https://test3.com",
 		ID:   testID3,
-		User: common.AnonymousUser,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 
@@ -171,7 +171,7 @@ func TestFileStorage_GenIDByURL(t *testing.T) {
 				err := fs.Close()
 				require.NoError(t, err)
 			}()
-			got, err := fs.GenIDByURL(context.Background(), test.url, common.AnonymousUser)
+			got, err := fs.GenIDByURL(context.Background(), test.url, common.TestUser)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GenIDByURL() error = %v, wantErr %v", err, test.wantErr)
 				return
@@ -228,7 +228,7 @@ func TestFileStorage_BatchSave(t *testing.T) {
 		},
 	}
 
-	res, err := store.BatchSave(context.Background(), request, common.AnonymousUser)
+	res, err := store.BatchSave(context.Background(), request, common.TestUser)
 	require.NoError(t, err)
 	assert.Equal(t, res, response)
 }

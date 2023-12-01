@@ -6,4 +6,7 @@ const (
 	DefaultStorageFilePath = ""
 	DefaultDBDSN           = ""
 	AnonymousUser          = "anonymous"
+	TestUser               = "test-user"
+	SessionCookieName      = "X-Session-Id"
+	MuxUserVarName         = "user-id"
 )

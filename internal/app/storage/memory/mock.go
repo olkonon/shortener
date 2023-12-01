@@ -9,7 +9,7 @@ var MockID2 = common.GenHashedString("http://test.com/test")
 func NewMockStorage() *InMemory {
 	return &InMemory{
 		storeByID: map[string]map[string]string{
-			common.AnonymousUser: {
+			common.TestUser: {
 				MockID1: "http://test.com/test?v=3",
 				MockID2: "http://test.com/test",
 			},

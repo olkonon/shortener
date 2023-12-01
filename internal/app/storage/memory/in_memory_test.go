@@ -36,7 +36,7 @@ func TestInMemory_GetURLByID(t *testing.T) {
 		{
 			name: "record exist",
 			fields: fields{
-				storeByID: map[string]map[string]string{common.AnonymousUser: {testID: testURL}},
+				storeByID: map[string]map[string]string{common.TestUser: {testID: testURL}},
 			},
 			args:    struct{ ID string }{ID: testID},
 			want:    testURL,
@@ -45,7 +45,7 @@ func TestInMemory_GetURLByID(t *testing.T) {
 		{
 			name: "record not exist",
 			fields: fields{
-				storeByID: map[string]map[string]string{common.AnonymousUser: {testID: testURL}},
+				storeByID: map[string]map[string]string{common.TestUser: {testID: testURL}},
 			},
 			args:    struct{ ID string }{ID: "fwrefw3"},
 			want:    "",
@@ -95,7 +95,7 @@ func TestInMemory_GenIDByURL(t *testing.T) {
 		{
 			name: "generate from existed URL",
 			fields: fields{
-				storeByID: map[string]map[string]string{common.AnonymousUser: {testID: testURL}},
+				storeByID: map[string]map[string]string{common.TestUser: {testID: testURL}},
 			},
 			args:    struct{ url string }{url: testURL},
 			want:    testID,
@@ -113,7 +113,7 @@ func TestInMemory_GenIDByURL(t *testing.T) {
 				err := ims.Close()
 				require.NoError(t, err)
 			}()
-			got, err := ims.GenIDByURL(context.Background(), test.args.url, common.AnonymousUser)
+			got, err := ims.GenIDByURL(context.Background(), test.args.url, common.TestUser)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GenIDByURL() error = %v, wantErr %v", err, test.wantErr)
 				return
@@ -164,7 +164,7 @@ func TestInMemory_BatchSave(t *testing.T) {
 		},
 	}
 
-	res, err := ims.BatchSave(context.Background(), request, common.AnonymousUser)
+	res, err := ims.BatchSave(context.Background(), request, common.TestUser)
 	require.NoError(t, err)
 	assert.Equal(t, res, response)
 }

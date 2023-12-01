@@ -12,10 +12,12 @@ func New(h *handler.Handler) *mux.Router {
 	r.Use(handler.WithLog)
 	r.Use(handler.WithGzip)
 	r.Use(handlers.CompressHandler)
-	r.HandleFunc("/", h.POST).Methods(http.MethodPost)
-	r.HandleFunc("/ping", h.Ping).Methods(http.MethodGet)
-	r.HandleFunc("/{id}", h.GET).Methods(http.MethodGet)
-	r.HandleFunc("/api/shorten/batch", h.BatchPostJSON).Methods(http.MethodPost)
-	r.HandleFunc("/api/shorten", h.PostJSON).Methods(http.MethodPost)
+	r.Use(h.WithAuth)
+	r.Methods(http.MethodPost).Path("/").Handler(h.AnonymousAuthHandler(h.POST))
+	r.Methods(http.MethodGet).Path("/ping").HandlerFunc(h.Ping)
+	r.Methods(http.MethodGet).Path("/{id}").HandlerFunc(h.GET)
+	r.Methods(http.MethodPost).Path("/api/shorten/batch").Handler(h.AnonymousAuthHandler(h.BatchPostJSON))
+	r.Methods(http.MethodPost).Path("/api/shorten").Handler(h.AnonymousAuthHandler(h.PostJSON))
+	r.Methods(http.MethodGet).Path("/api/user/urls").Handler(h.RequireAuthHandler(h.UserGET))
 	return r
 }

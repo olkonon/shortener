@@ -13,12 +13,13 @@ import (
 )
 
 const CreateTable = `CREATE TABLE IF NOT EXISTS urls (
-    	user_id varchar(32) NOT NULL,
+    	user_id varchar(36) NOT NULL,
     	original_url varchar(256) NOT NULL,
     	short_url varchar(10) NOT NULL,
     	PRIMARY KEY (user_id,original_url)
 )`
 const SelectURLByID = `SELECT original_url FROM urls WHERE short_url=$1;`
+const SelectURLByUser = `SELECT original_url,short_url FROM urls WHERE user_id=$1;`
 const InsertToTable = `INSERT INTO urls (short_url,original_url,user_id) VALUES ($1,$2,$3)`
 
 func NewDatabaseStore(dsn string) *DatabaseStore {
@@ -102,6 +103,38 @@ func (dbs *DatabaseStore) GetURLByID(ctx context.Context, ID string) (string, er
 		return "", err
 	}
 	return url, nil
+}
+
+func (dbs *DatabaseStore) GetByUser(ctx context.Context, user string) ([]storage.UserRecord, error) {
+	result := make([]storage.UserRecord, 0)
+
+	dbCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	rows, err := dbs.db.QueryContext(dbCtx, SelectURLByUser, user)
+
+	if err != nil {
+		return result, err
+	}
+	if rows.Err() != nil {
+		return result, rows.Err()
+	}
+
+	for rows.Next() {
+		record := storage.UserRecord{}
+		err = rows.Scan(&record.OriginalURL, &record.ShortID)
+		if err != nil {
+			return result, err
+		}
+
+		result = append(result, record)
+	}
+
+	if len(result) == 0 {
+		return result, storage.ErrUserURLListEmpty
+	}
+
+	return result, nil
 }
 
 func (dbs *DatabaseStore) Close() error {
