@@ -67,7 +67,7 @@ func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.store.GenIDByURL(r.Context(), longURL)
+	id, err := h.store.GenIDByURL(r.Context(), longURL, common.AnonymousUser)
 	if errors.Is(err, storage.ErrDuplicateURL) {
 		w.WriteHeader(http.StatusConflict)
 		w.Write([]byte(fmt.Sprintf("%s/%s", h.baseURL, id)))
@@ -111,7 +111,7 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.store.GenIDByURL(r.Context(), data.URL)
+	id, err := h.store.GenIDByURL(r.Context(), data.URL, common.AnonymousUser)
 	if err != nil {
 		if errors.Is(err, storage.ErrDuplicateURL) {
 			successStatusCode = http.StatusConflict
@@ -176,7 +176,7 @@ func (h *Handler) BatchPostJSON(w http.ResponseWriter, r *http.Request) {
 		batchUpdate[i].CorrelationID = val.CorrelationID
 	}
 
-	batchResponse, err := h.store.BatchSave(r.Context(), batchUpdate)
+	batchResponse, err := h.store.BatchSave(r.Context(), batchUpdate, common.AnonymousUser)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

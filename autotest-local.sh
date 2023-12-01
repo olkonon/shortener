@@ -147,7 +147,7 @@ fi
 # Increment 10
 docker stop $(docker ps -a -q) > /dev/null
 docker rm -f $(docker ps -a -q) > /dev/null
-docker run --name iter10-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d postgres > /dev/null
+docker run --name iter10-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d arm64v8/postgres > /dev/null
 sleep 2
 MSG=$(shortenertestbeta -test.v -test.run=^TestIteration10$ \
                     -binary-path=cmd/shortener/shortener \
@@ -165,7 +165,7 @@ fi
 # Increment 11
 docker stop $(docker ps -a -q) > /dev/null
 docker rm -f $(docker ps -a -q) > /dev/null
-docker run --name iter11-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d postgres > /dev/null
+docker run --name iter11-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d arm64v8/postgres > /dev/null
 sleep 2
 MSG=$(shortenertestbeta -test.v -test.run=^TestIteration11$ \
                     -binary-path=cmd/shortener/shortener \
@@ -183,7 +183,7 @@ fi
 # Increment 12
 docker stop $(docker ps -a -q) > /dev/null
 docker rm -f $(docker ps -a -q) > /dev/null
-docker run --name iter12-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d postgres > /dev/null
+docker run --name iter12-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d arm64v8/postgres > /dev/null
 sleep 2
 MSG=$(shortenertestbeta -test.v -test.run=^TestIteration12$ \
                     -binary-path=cmd/shortener/shortener \
@@ -200,7 +200,7 @@ fi
 # Increment 13
 docker stop $(docker ps -a -q) > /dev/null
 docker rm -f $(docker ps -a -q) > /dev/null
-docker run --name iter13-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d postgres > /dev/null
+docker run --name iter13-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d arm64v8/postgres > /dev/null
 sleep 2
 MSG=$(shortenertestbeta -test.v -test.run=^TestIteration13$ \
                     -binary-path=cmd/shortener/shortener \
@@ -214,3 +214,19 @@ else
   exit 128
 fi
 
+# Increment 14
+#docker stop $(docker ps -a -q) > /dev/null
+#docker rm -f $(docker ps -a -q) > /dev/null
+#docker run --name iter14-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=praktikum -d arm64v8/postgres > /dev/null
+#sleep 2
+#MSG=$(shortenertestbeta -test.v -test.run=^TestIteration14$ \
+#                    -binary-path=cmd/shortener/shortener \
+#                    -database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable')
+# shellcheck disable=SC2181
+#if [ $? -eq 0 ]; then
+#  echo "==> Test INC_14 .... [OK]"
+#else
+#  echo "$MSG"
+#  echo "==> Test INC_14 .. [FAIL]"
+#  exit 128
+#fi

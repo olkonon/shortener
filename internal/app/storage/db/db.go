@@ -13,12 +13,13 @@ import (
 )
 
 const CreateTable = `CREATE TABLE IF NOT EXISTS urls (
-		short_url varchar(10) NOT NULL,
+    	user_id varchar(32) NOT NULL,
     	original_url varchar(256) NOT NULL,
-    	PRIMARY KEY (original_url)
+    	short_url varchar(10) NOT NULL,
+    	PRIMARY KEY (user_id,original_url)
 )`
 const SelectURLByID = `SELECT original_url FROM urls WHERE short_url=$1;`
-const InsertToTable = `INSERT INTO urls (short_url,original_url) VALUES ($1,$2)`
+const InsertToTable = `INSERT INTO urls (short_url,original_url,user_id) VALUES ($1,$2,$3)`
 
 func NewDatabaseStore(dsn string) *DatabaseStore {
 	db, err := sql.Open("postgres", dsn)
@@ -49,9 +50,9 @@ type DatabaseStore struct {
 	db *sql.DB
 }
 
-func (dbs *DatabaseStore) GenIDByURL(ctx context.Context, url string) (string, error) {
+func (dbs *DatabaseStore) GenIDByURL(ctx context.Context, url string, user string) (string, error) {
 	newID := common.GenHashedString(url)
-	_, err := dbs.db.ExecContext(ctx, InsertToTable, newID, url)
+	_, err := dbs.db.ExecContext(ctx, InsertToTable, newID, url, user)
 	var pgError *pq.Error
 	if err == nil {
 		return newID, nil
@@ -62,7 +63,7 @@ func (dbs *DatabaseStore) GenIDByURL(ctx context.Context, url string) (string, e
 	return "", err
 }
 
-func (dbs *DatabaseStore) BatchSave(ctx context.Context, data []storage.BatchSaveRequest) ([]storage.BatchSaveResponse, error) {
+func (dbs *DatabaseStore) BatchSave(ctx context.Context, data []storage.BatchSaveRequest, user string) ([]storage.BatchSaveResponse, error) {
 	result := make([]storage.BatchSaveResponse, len(data))
 	tx, err := dbs.db.Begin()
 	if err != nil {
@@ -82,7 +83,7 @@ func (dbs *DatabaseStore) BatchSave(ctx context.Context, data []storage.BatchSav
 
 	for i, val := range data {
 		newID := common.GenHashedString(val.OriginalURL)
-		if _, err = txStmt.ExecContext(ctx, newID, val.OriginalURL); err != nil {
+		if _, err = txStmt.ExecContext(ctx, newID, val.OriginalURL, user); err != nil {
 			return result, err
 		}
 

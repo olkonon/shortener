@@ -14,13 +14,14 @@ import (
 )
 
 type Record struct {
-	ID  string
-	URL string
+	ID   string
+	URL  string
+	User string
 }
 
 func NewFileStorage(path string) *InFile {
 	tmp := &InFile{
-		storeByID: make(map[string]string),
+		storeByID: make(map[string]map[string]string),
 		filePath:  path,
 	}
 	if err := tmp.loadCacheFromFile(); err != nil {
@@ -39,41 +40,50 @@ func NewFileStorage(path string) *InFile {
 
 // InFile простое птокобезопасное хранилище на map реализующее интерфейс InFile, но хранящее свои данные в файле
 type InFile struct {
-	storeByID map[string]string
+	storeByID map[string]map[string]string
 	filePath  string
 	f         *os.File
 	lock      sync.RWMutex
 }
 
-func (fs *InFile) GenIDByURL(_ context.Context, url string) (string, error) {
+func (fs *InFile) GenIDByURL(_ context.Context, url string, user string) (string, error) {
 	fs.lock.Lock()
 	defer fs.lock.Unlock()
 
+	if _, isExists := fs.storeByID[user]; !isExists {
+		fs.storeByID[user] = make(map[string]string)
+	}
+
 	newID := common.GenHashedString(url)
-	if val, IDIsExists := fs.storeByID[newID]; IDIsExists {
+	if val, IDIsExists := fs.storeByID[user][newID]; IDIsExists {
 		if val == url {
 			return newID, storage.ErrDuplicateURL
 		}
 		return "", errors.New("can't generate new ID")
 	}
 
-	fs.storeByID[newID] = url
+	fs.storeByID[user][newID] = url
 
 	err := fs.appendToFile(Record{
-		ID:  newID,
-		URL: url,
+		ID:   newID,
+		URL:  url,
+		User: user,
 	})
 	return newID, err
 }
 
-func (fs *InFile) BatchSave(_ context.Context, data []storage.BatchSaveRequest) ([]storage.BatchSaveResponse, error) {
+func (fs *InFile) BatchSave(_ context.Context, data []storage.BatchSaveRequest, user string) ([]storage.BatchSaveResponse, error) {
 	fs.lock.Lock()
 	defer fs.lock.Unlock()
+
+	if _, isExists := fs.storeByID[user]; !isExists {
+		fs.storeByID[user] = make(map[string]string)
+	}
 
 	result := make([]storage.BatchSaveResponse, len(data))
 	for i, val := range data {
 		newID := common.GenHashedString(val.OriginalURL)
-		if existsURL, IDIsExists := fs.storeByID[newID]; IDIsExists {
+		if existsURL, IDIsExists := fs.storeByID[user][newID]; IDIsExists {
 			if existsURL == val.OriginalURL {
 				result[i] = storage.BatchSaveResponse{
 					CorrelationID: val.CorrelationID,
@@ -85,14 +95,15 @@ func (fs *InFile) BatchSave(_ context.Context, data []storage.BatchSaveRequest) 
 		}
 
 		err := fs.appendToFile(Record{
-			ID:  newID,
-			URL: val.OriginalURL,
+			ID:   newID,
+			URL:  val.OriginalURL,
+			User: user,
 		})
 		if err != nil {
 			return nil, err
 		}
 
-		fs.storeByID[newID] = val.OriginalURL
+		fs.storeByID[user][newID] = val.OriginalURL
 		result[i] = storage.BatchSaveResponse{
 			CorrelationID: val.CorrelationID,
 			ShortID:       newID,
@@ -105,11 +116,13 @@ func (fs *InFile) GetURLByID(_ context.Context, ID string) (string, error) {
 	fs.lock.RLock()
 	defer fs.lock.RUnlock()
 
-	url, isExists := fs.storeByID[ID]
-	if !isExists {
-		return "", errors.New("unknown id")
+	for _, userStore := range fs.storeByID {
+		if url, isExists := userStore[ID]; isExists {
+			return url, nil
+		}
 	}
-	return url, nil
+
+	return "", errors.New("unknown id")
 }
 
 func (fs *InFile) Close() error {
@@ -175,7 +188,11 @@ func (fs *InFile) loadCacheFromFile() error {
 		if err = json.Unmarshal(data, &rec); err != nil {
 			return err
 		}
-		fs.storeByID[rec.ID] = rec.URL
+		if _, isExists := fs.storeByID[rec.User]; !isExists {
+			fs.storeByID[rec.User] = make(map[string]string)
+		}
+
+		fs.storeByID[rec.User][rec.ID] = rec.URL
 	}
 	return nil
 }

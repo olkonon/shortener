@@ -11,11 +11,11 @@ var ErrDuplicateURL = errors.New("duplicate! URL is exists")
 // Storage интерфейс для хранилища данных
 type Storage interface {
 	//GenIDByURL генерирует ID сокращенной ссылки из полученного URL
-	GenIDByURL(ctx context.Context, url string) (string, error)
+	GenIDByURL(ctx context.Context, url string, user string) (string, error)
 	//GetURLByID возвращает URL соответствующий ID сокращенной ссылки
 	GetURLByID(ctx context.Context, id string) (string, error)
 	//BatchSave сохраняет пачку запросов
-	BatchSave(ctx context.Context, data []BatchSaveRequest) ([]BatchSaveResponse, error)
+	BatchSave(ctx context.Context, data []BatchSaveRequest, user string) ([]BatchSaveResponse, error)
 	//Close корректно завершает работу любого Storage
 	Close() error
 }

@@ -5,4 +5,5 @@ const (
 	DefaultListenAddress   = "localhost:8080"
 	DefaultStorageFilePath = ""
 	DefaultDBDSN           = ""
+	AnonymousUser          = "anonymous"
 )
