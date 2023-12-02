@@ -8,6 +8,7 @@ import (
 // ErrDuplicateURL говорит о том что пытаются добавить уже существующий URL
 var ErrDuplicateURL = errors.New("duplicate! URL is exists")
 var ErrUserURLListEmpty = errors.New("user no URL")
+var ErrDeletedURL = errors.New("url is deleted")
 
 // Storage интерфейс для хранилища данных
 type Storage interface {
@@ -19,6 +20,8 @@ type Storage interface {
 	GetByUser(ctx context.Context, user string) ([]UserRecord, error)
 	//BatchSave сохраняет пачку запросов
 	BatchSave(ctx context.Context, data []BatchSaveRequest, user string) ([]BatchSaveResponse, error)
+	//BatchDelete асинхронно удаляет пачку url у пользователя
+	BatchDelete(ctx context.Context, data []string, user string)
 	//Close корректно завершает работу любого Storage
 	Close() error
 }

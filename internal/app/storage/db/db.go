@@ -16,11 +16,18 @@ const CreateTable = `CREATE TABLE IF NOT EXISTS urls (
     	user_id varchar(36) NOT NULL,
     	original_url varchar(256) NOT NULL,
     	short_url varchar(10) NOT NULL,
+    	is_deleted boolean NOT NULL,
     	PRIMARY KEY (user_id,original_url)
 )`
-const SelectURLByID = `SELECT original_url FROM urls WHERE short_url=$1;`
-const SelectURLByUser = `SELECT original_url,short_url FROM urls WHERE user_id=$1;`
-const InsertToTable = `INSERT INTO urls (short_url,original_url,user_id) VALUES ($1,$2,$3)`
+const SelectURLByID = `SELECT original_url,is_deleted FROM urls WHERE short_url=$1;`
+const SelectURLByUser = `SELECT original_url,short_url FROM urls WHERE user_id=$1 AND NOT is_deleted;`
+const InsertToTable = `INSERT INTO urls (short_url,original_url,user_id,is_deleted) VALUES ($1,$2,$3,false)`
+const DeleteURLByID = `UPDATE urls SET is_deleted=TRUE WHERE user_id=$1 AND short_url = any($2);`
+
+type ChanMsg struct {
+	User      string
+	ShortURLs []string
+}
 
 func NewDatabaseStore(dsn string) *DatabaseStore {
 	db, err := sql.Open("postgres", dsn)
@@ -42,13 +49,22 @@ func NewDatabaseStore(dsn string) *DatabaseStore {
 		log.Fatal("DB init tables error", err)
 	}
 
-	return &DatabaseStore{
-		db: db,
+	tmp := &DatabaseStore{
+		db:               db,
+		deletedChan:      make(chan ChanMsg, 32),
+		stopChan:         make(chan bool),
+		stopFinishedChan: make(chan bool),
 	}
+
+	go tmp.deleteWorker()
+	return tmp
 }
 
 type DatabaseStore struct {
-	db *sql.DB
+	db               *sql.DB
+	deletedChan      chan ChanMsg
+	stopChan         chan bool
+	stopFinishedChan chan bool
 }
 
 func (dbs *DatabaseStore) GenIDByURL(ctx context.Context, url string, user string) (string, error) {
@@ -98,9 +114,13 @@ func (dbs *DatabaseStore) BatchSave(ctx context.Context, data []storage.BatchSav
 func (dbs *DatabaseStore) GetURLByID(ctx context.Context, ID string) (string, error) {
 	rowURL := dbs.db.QueryRowContext(ctx, SelectURLByID, ID)
 	var url string
-	err := rowURL.Scan(&url)
+	var isDeleted bool
+	err := rowURL.Scan(&url, &isDeleted)
 	if err != nil {
 		return "", err
+	}
+	if isDeleted {
+		return "", storage.ErrDeletedURL
 	}
 	return url, nil
 }
@@ -138,5 +158,53 @@ func (dbs *DatabaseStore) GetByUser(ctx context.Context, user string) ([]storage
 }
 
 func (dbs *DatabaseStore) Close() error {
-	return dbs.db.Close()
+	dbs.stopChan <- true
+	//Ждем пока воркер закончит работу
+	<-dbs.stopFinishedChan
+
+	if dbs.db != nil {
+		return dbs.db.Close()
+	}
+
+	return nil
+}
+
+func (dbs *DatabaseStore) BatchDelete(_ context.Context, data []string, user string) {
+	go func() {
+		// async
+		dbs.deletedChan <- ChanMsg{
+			User:      user,
+			ShortURLs: data,
+		}
+	}()
+}
+
+func (dbs *DatabaseStore) deleteWorker() {
+	defer func() {
+		dbs.stopFinishedChan <- true
+	}()
+	for {
+		select {
+		case data := <-dbs.deletedChan:
+			dbs.deleteRecords(data)
+		case <-dbs.stopChan:
+			return
+		}
+	}
+}
+
+func (dbs *DatabaseStore) deleteRecords(data ChanMsg) {
+	//Async
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := dbs.db.QueryContext(timeoutCtx, DeleteURLByID, data.User, pq.Array(data.ShortURLs))
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	if rows.Err() != nil {
+		log.Error(rows.Err())
+		return
+	}
 }

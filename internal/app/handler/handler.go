@@ -55,6 +55,10 @@ func (h *Handler) GET(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	longURL, err := h.store.GetURLByID(r.Context(), vars["id"])
 	if err != nil {
+		if errors.Is(err, storage.ErrDeletedURL) {
+			w.WriteHeader(http.StatusGone)
+			return
+		}
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -239,6 +243,36 @@ func (h *Handler) BatchPostJSON(w http.ResponseWriter, r *http.Request) {
 	if _, tmpErr := w.Write(buf); tmpErr != nil {
 		log.Error(tmpErr)
 	}
+}
+
+func (h *Handler) BatchDeleteJSON(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get(ContentTypeHeader) != ContentTypeApplicationJSON {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data := make([]string, 0)
+	err = json.Unmarshal(b, &data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Error("JSON deserialization error:", err)
+		return
+	}
+
+	if len(data) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Error("Empty request")
+		return
+	}
+
+	h.store.BatchDelete(r.Context(), data, mux.Vars(r)[common.MuxUserVarName])
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (h Handler) Ping(w http.ResponseWriter, _ *http.Request) {

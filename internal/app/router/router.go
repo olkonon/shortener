@@ -19,5 +19,6 @@ func New(h *handler.Handler) *mux.Router {
 	r.Methods(http.MethodPost).Path("/api/shorten/batch").Handler(h.AnonymousAuthHandler(h.BatchPostJSON))
 	r.Methods(http.MethodPost).Path("/api/shorten").Handler(h.AnonymousAuthHandler(h.PostJSON))
 	r.Methods(http.MethodGet).Path("/api/user/urls").Handler(h.RequireAuthHandler(h.UserGET))
+	r.Methods(http.MethodDelete).Path("/api/user/urls").Handler(h.RequireAuthHandler(h.BatchDeleteJSON))
 	return r
 }
