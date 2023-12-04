@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -24,10 +25,16 @@ const (
 )
 
 func New(config Config) *Handler {
+	buf := make([]byte, 16)
+	_, err := rand.Read(buf) // записываем байты в массив b
+	if err != nil {
+		log.Fatal(err)
+	}
 	return &Handler{
-		store:   config.Store,
-		baseURL: config.BaseURL,
-		dsn:     config.DSN,
+		store:     config.Store,
+		baseURL:   config.BaseURL,
+		dsn:       config.DSN,
+		secretKey: buf,
 	}
 }
 
@@ -38,19 +45,55 @@ type Config struct {
 }
 
 type Handler struct {
-	store   storage.Storage
-	dsn     string
-	baseURL string
+	store     storage.Storage
+	dsn       string
+	secretKey []byte
+	baseURL   string
 }
 
 func (h *Handler) GET(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	longURL, err := h.store.GetURLByID(r.Context(), vars["id"])
 	if err != nil {
+		if errors.Is(err, storage.ErrDeletedURL) {
+			w.WriteHeader(http.StatusGone)
+			return
+		}
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	http.Redirect(w, r, longURL, http.StatusTemporaryRedirect)
+}
+
+func (h *Handler) UserGET(w http.ResponseWriter, r *http.Request) {
+	urlList, err := h.store.GetByUser(r.Context(), mux.Vars(r)[common.MuxUserVarName])
+	if errors.Is(err, storage.ErrUserURLListEmpty) {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	response := make([]api.UserGetResponse, len(urlList))
+	for i, val := range urlList {
+		response[i].OriginalURL = val.OriginalURL
+		response[i].ShortURL = fmt.Sprintf("%s/%s", h.baseURL, val.ShortID)
+	}
+
+	buf, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Error("JSON serialization error:", err)
+		return
+	}
+
+	w.Header().Set(ContentTypeHeader, ContentTypeApplicationJSON)
+	w.WriteHeader(http.StatusOK)
+	if _, tmpErr := w.Write(buf); tmpErr != nil {
+		log.Error(tmpErr)
+	}
 }
 
 func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +110,7 @@ func (h *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.store.GenIDByURL(r.Context(), longURL)
+	id, err := h.store.GenIDByURL(r.Context(), longURL, mux.Vars(r)[common.MuxUserVarName])
 	if errors.Is(err, storage.ErrDuplicateURL) {
 		w.WriteHeader(http.StatusConflict)
 		w.Write([]byte(fmt.Sprintf("%s/%s", h.baseURL, id)))
@@ -111,7 +154,7 @@ func (h *Handler) PostJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.store.GenIDByURL(r.Context(), data.URL)
+	id, err := h.store.GenIDByURL(r.Context(), data.URL, mux.Vars(r)[common.MuxUserVarName])
 	if err != nil {
 		if errors.Is(err, storage.ErrDuplicateURL) {
 			successStatusCode = http.StatusConflict
@@ -176,7 +219,7 @@ func (h *Handler) BatchPostJSON(w http.ResponseWriter, r *http.Request) {
 		batchUpdate[i].CorrelationID = val.CorrelationID
 	}
 
-	batchResponse, err := h.store.BatchSave(r.Context(), batchUpdate)
+	batchResponse, err := h.store.BatchSave(r.Context(), batchUpdate, mux.Vars(r)[common.MuxUserVarName])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -200,6 +243,36 @@ func (h *Handler) BatchPostJSON(w http.ResponseWriter, r *http.Request) {
 	if _, tmpErr := w.Write(buf); tmpErr != nil {
 		log.Error(tmpErr)
 	}
+}
+
+func (h *Handler) BatchDeleteJSON(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get(ContentTypeHeader) != ContentTypeApplicationJSON {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data := make([]string, 0)
+	err = json.Unmarshal(b, &data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Error("JSON deserialization error:", err)
+		return
+	}
+
+	if len(data) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Error("Empty request")
+		return
+	}
+
+	h.store.BatchDelete(r.Context(), data, mux.Vars(r)[common.MuxUserVarName])
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (h Handler) Ping(w http.ResponseWriter, _ *http.Request) {

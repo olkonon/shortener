@@ -3,6 +3,7 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"github.com/olkonon/shortener/internal/app/api"
 	"github.com/olkonon/shortener/internal/app/common"
 	"github.com/olkonon/shortener/internal/app/storage/memory"
@@ -80,6 +81,7 @@ func TestHandler_POST(t *testing.T) {
 				BaseURL: test.baseURL,
 				Store:   store,
 			})
+			request = mux.SetURLVars(request, map[string]string{common.MuxUserVarName: common.TestUser})
 			h.POST(w, request)
 			result := w.Result()
 
@@ -162,6 +164,7 @@ func TestHandler_POST_JSON(t *testing.T) {
 				BaseURL: test.baseURL,
 				Store:   store,
 			})
+			request = mux.SetURLVars(request, map[string]string{common.MuxUserVarName: common.TestUser})
 			h.PostJSON(w, request)
 			result := w.Result()
 			assert.Equal(t, test.want.statusCode, result.StatusCode)
@@ -210,6 +213,7 @@ func TestHandler_GET(t *testing.T) {
 		test := tt
 		f := func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
+
 			w := httptest.NewRecorder()
 			store := memory.NewMockStorage()
 			defer func() {
@@ -220,6 +224,7 @@ func TestHandler_GET(t *testing.T) {
 				BaseURL: common.DefaultBaseURL,
 				Store:   store,
 			})
+			request = mux.SetURLVars(request, map[string]string{common.MuxUserVarName: common.TestUser})
 			h.GET(w, request)
 			result := w.Result()
 

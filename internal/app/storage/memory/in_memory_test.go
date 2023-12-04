@@ -17,7 +17,7 @@ func init() {
 
 func TestInMemory_GetURLByID(t *testing.T) {
 	type fields struct {
-		storeByID map[string]string
+		storeByID map[string]map[string]Record
 	}
 	type args struct {
 		ID string
@@ -36,7 +36,10 @@ func TestInMemory_GetURLByID(t *testing.T) {
 		{
 			name: "record exist",
 			fields: fields{
-				storeByID: map[string]string{testID: testURL},
+				storeByID: map[string]map[string]Record{common.TestUser: {testID: Record{
+					OriginalURL: testURL,
+					IsDeleted:   false,
+				}}},
 			},
 			args:    struct{ ID string }{ID: testID},
 			want:    testURL,
@@ -45,7 +48,9 @@ func TestInMemory_GetURLByID(t *testing.T) {
 		{
 			name: "record not exist",
 			fields: fields{
-				storeByID: map[string]string{testID: testURL},
+				storeByID: map[string]map[string]Record{common.TestUser: {testID: Record{
+					OriginalURL: testURL,
+					IsDeleted:   false}}},
 			},
 			args:    struct{ ID string }{ID: "fwrefw3"},
 			want:    "",
@@ -76,8 +81,7 @@ func TestInMemory_GetURLByID(t *testing.T) {
 
 func TestInMemory_GenIDByURL(t *testing.T) {
 	type fields struct {
-		storeByID  map[string]string
-		storeByURL map[string]string
+		storeByID map[string]map[string]Record
 	}
 	type args struct {
 		url string
@@ -96,7 +100,10 @@ func TestInMemory_GenIDByURL(t *testing.T) {
 		{
 			name: "generate from existed URL",
 			fields: fields{
-				storeByID: map[string]string{testID: testURL},
+				storeByID: map[string]map[string]Record{common.TestUser: {testID: Record{
+					OriginalURL: testURL,
+					IsDeleted:   false,
+				}}},
 			},
 			args:    struct{ url string }{url: testURL},
 			want:    testID,
@@ -114,7 +121,7 @@ func TestInMemory_GenIDByURL(t *testing.T) {
 				err := ims.Close()
 				require.NoError(t, err)
 			}()
-			got, err := ims.GenIDByURL(context.Background(), test.args.url)
+			got, err := ims.GenIDByURL(context.Background(), test.args.url, common.TestUser)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GenIDByURL() error = %v, wantErr %v", err, test.wantErr)
 				return
@@ -165,7 +172,7 @@ func TestInMemory_BatchSave(t *testing.T) {
 		},
 	}
 
-	res, err := ims.BatchSave(context.Background(), request)
+	res, err := ims.BatchSave(context.Background(), request, common.TestUser)
 	require.NoError(t, err)
 	assert.Equal(t, res, response)
 }

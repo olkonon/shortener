@@ -29,18 +29,21 @@ func TestFileStorage_GetURLByID(t *testing.T) {
 	testID3 := common.GenHashedString("https://test3.com")
 
 	err := store.appendToFile(Record{
-		URL: "https://test.com",
-		ID:  testID1,
+		URL:  "https://test.com",
+		ID:   testID1,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
-		URL: "https://test2.com",
-		ID:  testID2,
+		URL:  "https://test2.com",
+		ID:   testID2,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
-		URL: "https://test3.com",
-		ID:  testID3,
+		URL:  "https://test3.com",
+		ID:   testID3,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 
@@ -113,18 +116,21 @@ func TestFileStorage_GenIDByURL(t *testing.T) {
 	testID2 := common.GenHashedString("https://test2.com")
 	testID3 := common.GenHashedString("https://test3.com")
 	err := store.appendToFile(Record{
-		URL: "https://test.com",
-		ID:  testID1,
+		URL:  "https://test.com",
+		ID:   testID1,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
-		URL: "https://test2.com",
-		ID:  testID2,
+		URL:  "https://test2.com",
+		ID:   testID2,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 	err = store.appendToFile(Record{
-		URL: "https://test3.com",
-		ID:  testID3,
+		URL:  "https://test3.com",
+		ID:   testID3,
+		User: common.TestUser,
 	})
 	require.NoError(t, err)
 
@@ -165,7 +171,7 @@ func TestFileStorage_GenIDByURL(t *testing.T) {
 				err := fs.Close()
 				require.NoError(t, err)
 			}()
-			got, err := fs.GenIDByURL(context.Background(), test.url)
+			got, err := fs.GenIDByURL(context.Background(), test.url, common.TestUser)
 			if (err != nil) != test.wantErr {
 				t.Errorf("GenIDByURL() error = %v, wantErr %v", err, test.wantErr)
 				return
@@ -222,7 +228,7 @@ func TestFileStorage_BatchSave(t *testing.T) {
 		},
 	}
 
-	res, err := store.BatchSave(context.Background(), request)
+	res, err := store.BatchSave(context.Background(), request, common.TestUser)
 	require.NoError(t, err)
 	assert.Equal(t, res, response)
 }
